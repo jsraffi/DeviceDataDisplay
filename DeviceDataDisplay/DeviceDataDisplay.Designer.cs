@@ -28,37 +28,70 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.toolstripmenu = new System.Windows.Forms.ToolStrip();
-            this.lblShowChannels = new System.Windows.Forms.ToolStripLabel();
-            this.ShowNoOfChannels = new System.Windows.Forms.ToolStripComboBox();
-            this.toolstripmenu.SuspendLayout();
+            this.mainmenuStrip = new System.Windows.Forms.MenuStrip();
+            this.mainMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setLevelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.label1 = new System.Windows.Forms.Label();
+            this.ShowChannels = new System.Windows.Forms.ToolStripComboBox();
+            this.mainmenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
-            // toolstripmenu
+            // mainmenuStrip
             // 
-            this.toolstripmenu.BackColor = System.Drawing.Color.RoyalBlue;
-            this.toolstripmenu.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.toolstripmenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.lblShowChannels,
-            this.ShowNoOfChannels});
-            this.toolstripmenu.Location = new System.Drawing.Point(0, 0);
-            this.toolstripmenu.Name = "toolstripmenu";
-            this.toolstripmenu.Size = new System.Drawing.Size(767, 28);
-            this.toolstripmenu.TabIndex = 0;
+            this.mainmenuStrip.BackColor = System.Drawing.Color.Blue;
+            this.mainmenuStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.mainmenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mainMenuToolStripMenuItem,
+            this.ShowChannels});
+            this.mainmenuStrip.Location = new System.Drawing.Point(0, 0);
+            this.mainmenuStrip.Name = "mainmenuStrip";
+            this.mainmenuStrip.Size = new System.Drawing.Size(767, 36);
+            this.mainmenuStrip.TabIndex = 1;
+            this.mainmenuStrip.Text = "menuStrip1";
             // 
-            // lblShowChannels
+            // mainMenuToolStripMenuItem
             // 
-            this.lblShowChannels.Name = "lblShowChannels";
-            this.lblShowChannels.Size = new System.Drawing.Size(112, 25);
-            this.lblShowChannels.Text = "Select Channels";
+            this.mainMenuToolStripMenuItem.BackColor = System.Drawing.Color.RoyalBlue;
+            this.mainMenuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.setUnitsToolStripMenuItem,
+            this.setLevelToolStripMenuItem});
+            this.mainMenuToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 12F);
+            this.mainMenuToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
+            this.mainMenuToolStripMenuItem.Name = "mainMenuToolStripMenuItem";
+            this.mainMenuToolStripMenuItem.Size = new System.Drawing.Size(123, 32);
+            this.mainMenuToolStripMenuItem.Text = "Main Menu";
+            this.mainMenuToolStripMenuItem.Click += new System.EventHandler(this.mainMneuToolStripMenuItem_Click);
             // 
-            // ShowNoOfChannels
+            // setUnitsToolStripMenuItem
             // 
-            this.ShowNoOfChannels.AccessibleName = "Select Channels";
-            this.ShowNoOfChannels.MaxDropDownItems = 32;
-            this.ShowNoOfChannels.Name = "ShowNoOfChannels";
-            this.ShowNoOfChannels.Size = new System.Drawing.Size(121, 28);
-            this.ShowNoOfChannels.SelectedIndexChanged += new System.EventHandler(this.ShowNoOfChannels_SelectedIndexChanged);
+            this.setUnitsToolStripMenuItem.Name = "setUnitsToolStripMenuItem";
+            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(181, 32);
+            this.setUnitsToolStripMenuItem.Text = "Set Units";
+            this.setUnitsToolStripMenuItem.Click += new System.EventHandler(this.setUnitsToolStripMenuItem_Click);
+            // 
+            // setLevelToolStripMenuItem
+            // 
+            this.setLevelToolStripMenuItem.Name = "setLevelToolStripMenuItem";
+            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(181, 32);
+            this.setLevelToolStripMenuItem.Text = "Set Level";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Arial Unicode MS", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.White;
+            this.label1.Location = new System.Drawing.Point(230, 6);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(130, 23);
+            this.label1.TabIndex = 2;
+            this.label1.Text = "Select Channels";
+            // 
+            // ShowChannels
+            // 
+            this.ShowChannels.Name = "ShowChannels";
+            this.ShowChannels.Size = new System.Drawing.Size(121, 32);
+            this.ShowChannels.SelectedIndexChanged += new System.EventHandler(this.ShowChannels_SelectedIndexChanged);
             // 
             // DeviceDataDisplay
             // 
@@ -67,7 +100,8 @@
             this.AutoScroll = true;
             this.BackColor = System.Drawing.Color.RoyalBlue;
             this.ClientSize = new System.Drawing.Size(767, 285);
-            this.Controls.Add(this.toolstripmenu);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.mainmenuStrip);
             this.Font = new System.Drawing.Font("Arial Unicode MS", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MaximizeBox = false;
             this.Name = "DeviceDataDisplay";
@@ -75,18 +109,20 @@
             this.Text = "Devices Data Display";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.DeviceDataDisplay_Load);
-            this.toolstripmenu.ResumeLayout(false);
-            this.toolstripmenu.PerformLayout();
+            this.mainmenuStrip.ResumeLayout(false);
+            this.mainmenuStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.ToolStrip toolstripmenu;
-        private System.Windows.Forms.ToolStripComboBox ShowNoOfChannels;
-        private System.Windows.Forms.ToolStripLabel lblShowChannels;
+        private System.Windows.Forms.MenuStrip mainmenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem mainMenuToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem setUnitsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem setLevelToolStripMenuItem;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolStripComboBox ShowChannels;
     }
 }
 

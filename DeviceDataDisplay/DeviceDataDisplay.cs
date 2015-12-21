@@ -23,9 +23,8 @@ namespace DeviceDataDisplay
         private void DeviceDataDisplay_Load(object sender, EventArgs e)
         {
             string[] channels = new string[] { "1", "2", "3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32"};
-
-
-            ShowNoOfChannels.Items.AddRange(channels);
+            
+            ShowChannels.Items.AddRange(channels);
 
             ChannelSetting();
         }
@@ -165,7 +164,6 @@ namespace DeviceDataDisplay
             int channelid = 0;
             for (var i = 0; i < channelrows; i++)
             {
-                
                 for (var j = 0; j < channelcol; j++)
                 {
                     if (noOfChannels == 3 && i == 1 && j == 1) { break; }
@@ -346,27 +344,31 @@ namespace DeviceDataDisplay
             return result.ToString();
             
         }
-
-        private void ShowNoOfChannels_SelectedIndexChanged(object sender, EventArgs e)
+        
+        private void mainMneuToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            int channelNo = Convert.ToInt32(ShowNoOfChannels.SelectedItem.ToString());
+
+        }
+
+        private void ShowChannels_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int channelNo = Convert.ToInt32(ShowChannels.SelectedItem.ToString());
             for (int i = Controls.Count - 1; i >= 0; i--)
             {
-                if (Controls[i].Name != "toolstripmenu" )
+                if (Controls[i].Name != "mainmenuStrip")
                 {
                     Controls[i].Dispose();
                 }
             }
-            int channelRows = 0;
-            channelRows = (channelNo == 1) ? 1 : channelRows + 1;
-
+            
             ChannelSetting(channelNo, 3, 3);
+
         }
-            
-            
-            
 
-        
-
+        private void setUnitsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetUnits setunits = new SetUnits();
+            setunits.Show();
+        }
     }
 }

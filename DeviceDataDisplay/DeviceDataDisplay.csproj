@@ -68,6 +68,12 @@
     <Compile Include="Models\Channels.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SetUnits.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SetUnits.Designer.cs">
+      <DependentUpon>SetUnits.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="DeviceDataDisplay.resx">
       <DependentUpon>DeviceDataDisplay.cs</DependentUpon>
     </EmbeddedResource>
@@ -81,6 +87,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="SetUnits.resx">
+      <DependentUpon>SetUnits.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
