@@ -32,8 +32,8 @@
             this.mainMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setLevelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.label1 = new System.Windows.Forms.Label();
             this.ShowChannels = new System.Windows.Forms.ToolStripComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.mainmenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -75,6 +75,13 @@
             this.setLevelToolStripMenuItem.Name = "setLevelToolStripMenuItem";
             this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(181, 32);
             this.setLevelToolStripMenuItem.Text = "Set Level";
+            this.setLevelToolStripMenuItem.Click += new System.EventHandler(this.setLevelToolStripMenuItem_Click);
+            // 
+            // ShowChannels
+            // 
+            this.ShowChannels.Name = "ShowChannels";
+            this.ShowChannels.Size = new System.Drawing.Size(121, 32);
+            this.ShowChannels.SelectedIndexChanged += new System.EventHandler(this.ShowChannels_SelectedIndexChanged);
             // 
             // label1
             // 
@@ -86,12 +93,6 @@
             this.label1.Size = new System.Drawing.Size(130, 23);
             this.label1.TabIndex = 2;
             this.label1.Text = "Select Channels";
-            // 
-            // ShowChannels
-            // 
-            this.ShowChannels.Name = "ShowChannels";
-            this.ShowChannels.Size = new System.Drawing.Size(121, 32);
-            this.ShowChannels.SelectedIndexChanged += new System.EventHandler(this.ShowChannels_SelectedIndexChanged);
             // 
             // DeviceDataDisplay
             // 

@@ -13,6 +13,23 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>D:\Raffi\Projects\DeviceDataDisplay\deploy\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <AutorunEnabled>true</AutorunEnabled>
+    <ApplicationRevision>1</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,18 +50,22 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>0BFA89BCCB4BF7FD0EF13F522D9146EFD82B0323</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>DeviceDataDisplay_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Iesi.Collections, Version=4.0.0.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="MySql.Data, Version=6.9.8.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files (x86)\MySQL\Connector.NET 6.9\Assemblies\v4.5\MySql.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="NHibernate, Version=4.0.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
-      <HintPath>..\packages\NHibernate.4.0.4.4000\lib\net40\NHibernate.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -65,15 +86,21 @@
     <Compile Include="DeviceDataDisplay.Designer.cs">
       <DependentUpon>DeviceDataDisplay.cs</DependentUpon>
     </Compile>
-    <Compile Include="Models\Channels.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SetLevel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SetLevel.Designer.cs">
+      <DependentUpon>SetLevel.cs</DependentUpon>
+    </Compile>
     <Compile Include="SetUnits.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="SetUnits.Designer.cs">
       <DependentUpon>SetUnits.cs</DependentUpon>
     </Compile>
+    <Compile Include="ViewModels\Channel.cs" />
     <EmbeddedResource Include="DeviceDataDisplay.resx">
       <DependentUpon>DeviceDataDisplay.cs</DependentUpon>
     </EmbeddedResource>
@@ -87,9 +114,13 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="SetLevel.resx">
+      <DependentUpon>SetLevel.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="SetUnits.resx">
       <DependentUpon>SetUnits.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="DeviceDataDisplay_TemporaryKey.pfx" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -100,17 +131,21 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="SharedLibs\nhibernate-mapping.xsd">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Content Include="Mapppings\Channels.hbm.xml" />
-    <Content Include="NHibernate.mysql\hibernate.cfg.xml" />
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

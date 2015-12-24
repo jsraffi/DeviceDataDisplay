@@ -9,7 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
-
+using System.Configuration;
+using DeviceDataDisplay.ViewModels;
 namespace DeviceDataDisplay
 {
     public partial class DeviceDataDisplay : Form
@@ -38,9 +39,8 @@ namespace DeviceDataDisplay
 
         private void ChannelSetting(int noOfChannels=32, int columns=8,int rows=4)
         {
-            int channelrows = 0;
-            int channelcol = 0;
-            Font fontlessthan8 = new Font("Vaerdana", 25, FontStyle.Bold);
+            
+            Font fontlessthan8 = new Font("Arial Unicode MS", 25, FontStyle.Bold);
             Point pointlessthan8 = new Point(100, 200);
             Point pointbetween9and12 = new Point(75, 125);
             Point pointbetween13and16 = new Point(75, 100);
@@ -52,43 +52,32 @@ namespace DeviceDataDisplay
             Font fontless2932 = new Font("Vaerdana", 15, FontStyle.Bold);
             if (noOfChannels >= 1 && noOfChannels <= 4)
             {
-                rows = 2;
-                columns = 4;
-
                 if (noOfChannels == 1)
                 {
-                    channelcol = 1;
-                    channelrows = 1;
                     rows = 1;
                     columns = 1;
 
                 }
                 else if (noOfChannels == 2)
                 {
-                    channelcol = 2;
-                    channelrows = 1;
+                    
                     rows = 1;
                     columns = 2;
                 }
                 else if (noOfChannels == 3)
                 {
-                    channelcol = 2;
-                    channelrows = 2;
                     rows = 2;
                     columns = 2;
                 }
                 else if (noOfChannels == 4)
                 {
-                    channelcol = 2;
-                    channelrows = 2;
+                    
                     rows = 2;
                     columns = 2;
                 }
             }
             else if (noOfChannels >= 5 && noOfChannels <= 8)
             {
-                channelcol = 4;
-                channelrows = 2;
                 rows = 2;
                 columns = 4;
 
@@ -97,50 +86,43 @@ namespace DeviceDataDisplay
             {
                 rows = 3;
                 columns = 4;
-                channelcol = 4;
-                channelrows = 3;
+                
             }
             else if (noOfChannels >= 13 && noOfChannels <= 16)
             {
                 rows = 4;
                 columns = 4;
-                channelrows = 4;
-                channelcol = 4;
+                
             }
             else if (noOfChannels >= 13 && noOfChannels <= 16)
             {
                 rows = 4;
                 columns = 4;
-                channelrows = 4;
-                channelcol = 4;
+                
             }
             else if (noOfChannels >= 17 && noOfChannels <= 20)
             {
                 rows = 4;
                 columns = 5;
-                channelrows = 4;
-                channelcol = 5;
+                
             }
             else if (noOfChannels >= 21 && noOfChannels <= 24)
             {
                 rows = 4;
                 columns = 6;
-                channelrows = 4;
-                channelcol = 6;
+                
             }
             else if (noOfChannels >= 25 && noOfChannels <= 28)
             {
                 rows = 4;
                 columns = 7;
-                channelrows = 4;
-                channelcol = 7;
+                
             }
             else if (noOfChannels >= 29 && noOfChannels <= 32)
             {
                 rows = 4;
                 columns = 8;
-                channelrows = 4;
-                channelcol = 8;
+                
             }
 
 
@@ -151,20 +133,20 @@ namespace DeviceDataDisplay
             int panelwidth = (width / columns);
 
             /*Creating DataTable onload once*/
-            string connectionstring = "SERVER=localhost;Database=datalogger;UID=root;Password=Raffi1971$";
+            //string connectionstring = "SERVER=localhost;Database=datalogger;UID=root;Password=Raffi1971$";
 
-            MySqlConnection Connection = new MySqlConnection(connectionstring);
+            MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]);
             Connection.Open();
-            string query = "Select * from channels";
+            string query = "Select channel_no,display_name,reference_name,um.units as unitsmesure,value,minlevel,maxlevel from channels ch inner join unitsofmesurement um on ch.units=um.unitID";
             MySqlDataAdapter channeladapter = new MySqlDataAdapter(query, Connection);
             DataSet channelsdata = new DataSet();
             channeladapter.Fill(channelsdata, "channels");
 
             DataTable tblChannel = channelsdata.Tables["channels"];
             int channelid = 0;
-            for (var i = 0; i < channelrows; i++)
+            for (var i = 0; i < rows; i++)
             {
-                for (var j = 0; j < channelcol; j++)
+                for (var j = 0; j < columns; j++)
                 {
                     if (noOfChannels == 3 && i == 1 && j == 1) { break; }
 
@@ -234,87 +216,905 @@ namespace DeviceDataDisplay
                     
                     p.Location = new Point((panelwidth * j), (panelheight * i));
                     Label lbl = new Label();
-                        
-                    if (noOfChannels >= 1 && noOfChannels <= 8)
-                    {
 
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointlessthan8;
-                        lbl.Font = fontlessthan8;
-                        lbl.Height =50;
-                        lbl.Width =250;
-                        lbl.ForeColor = Color.White;
-                        p.Controls.Add(lbl);
+                    if (noOfChannels == 1)
+                    {
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 100, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width/2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
                         
+                        lbl.Location = pointvalue;
+                        
+                        lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 40, FontStyle.Bold);
+                        
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+                        
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height/6));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        
+                        
+
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height*.65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
+                    }
+                    if (noOfChannels ==2)
+                    {
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 70, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
+                        lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 30, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+
+
+
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
+                    }
+                    if (noOfChannels >=3 && noOfChannels <=4)
+                    {
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 60, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
+                        lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 25, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
+
+                    }
+                    if (noOfChannels >= 5 && noOfChannels <= 8)
+                    {
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 32, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
+                        lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 20, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
                     }
 
                     if (noOfChannels >= 9 && noOfChannels <= 12)
                     {
-                        
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointbetween9and12;
-                        lbl.Font = fontlessthan8;
-                        lbl.Height = 50;
-                        lbl.Width = 250;
+
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 28, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
                         lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
                         p.Controls.Add(lbl);
 
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 18, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
                     }
                     if (noOfChannels >= 13 && noOfChannels <= 16)
                     {
-                        
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointbetween13and16;
-                        lbl.Font = fontlessthan8;
-                        lbl.Height = 50;
-                        lbl.Width = 250;
+
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 24, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
                         lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
                         p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 15, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
                     }
 
                     if (noOfChannels >= 17 && noOfChannels <= 20)
                     {
-                        
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointbetween17and20;
-                        lbl.Font = fontlessthan8;
-                        lbl.Height = 50;
-                        lbl.Width = 250;
+
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 20, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
                         lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
                         p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 12, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannelminmax;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
                     }
                     if (noOfChannels >= 21 && noOfChannels <= 24)
                     {
-                        
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointbetween20and24;
-                        lbl.Font = fontless2024;
-                        lbl.Height = 50;
-                        lbl.Width = 200;
+
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 16, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
                         lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
                         p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 9, FontStyle.Bold);
+                        Font fontChannel = new Font("Arial Unicode MS", 12, FontStyle.Bold);
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannel;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 6));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
+
                     }
                     if (noOfChannels >= 25 && noOfChannels <= 28)
                     {
-                        
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointbetween20and24;
-                        lbl.Font = fontless2528;
-                        lbl.Height = 50;
-                        lbl.Width = 160;
+
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 14, FontStyle.Bold);
+
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
                         lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
                         p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 7, FontStyle.Bold);
+                        Font fontChannel = new Font("Arial Unicode MS", 12, FontStyle.Bold);
+
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannel;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 6));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
                     }
                     if (noOfChannels >= 29 && noOfChannels <= 32)
                     {
-                        
-                        lbl.Text = getchannel(tblChannel, "Channel " + channelid.ToString());
-                        lbl.Location = pointbetween20and24;
-                        lbl.Font = fontless2932;
-                        lbl.Height = 50;
-                        lbl.Width = 130;
+
+                        DataRow drow = getchannel(tblChannel, channelid);
+                        //Adding value to panel and units
+                        Font fontChannel1 = new Font("Arial Unicode MS", 13, FontStyle.Bold);
+                        lbl.Font = fontChannel1;
+                        lbl.AutoSize = true;
+                        lbl.Text = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        Graphics g = CreateGraphics();
+                        SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+                        lbl.Height = Convert.ToInt32(extent.Height);
+                        lbl.Width = Convert.ToInt32(extent.Width);
+                        var x = (p.Width / 2) - (lbl.Width / 2);
+                        Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+                        lbl.Location = pointvalue;
+
                         lbl.ForeColor = Color.White;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
                         p.Controls.Add(lbl);
+
+                        //Adding channel to panel
+                        Font fontChannelminmax = new Font("Arial Unicode MS", 6, FontStyle.Bold);
+                        Font fontChannel = new Font("Arial Unicode MS", 12, FontStyle.Bold);
+                        Label lblchannelname = new Label();
+                        lblchannelname.Font = fontChannel;
+                        lblchannelname.AutoSize = true;
+                        lblchannelname.Text = drow["reference_name"].ToString();
+
+
+                        SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+                        lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+                        lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+                        var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+                        Point pointvaluechannelname = new Point(xchannelname, (p.Height / 6));
+
+                        lblchannelname.Location = pointvaluechannelname;
+
+                        lblchannelname.ForeColor = Color.White;
+                        lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblchannelname);
+
+                        //adding min level
+                        Label lblmin = new Label();
+                        lblmin.Font = fontChannelminmax;
+                        lblmin.AutoSize = true;
+                        lblmin.Text = "Min = " + drow["minlevel"].ToString();
+
+
+                        SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+                        lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+                        lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+                        var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+                        Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+                        lblmin.Location = pointminlevel;
+
+                        lblmin.ForeColor = Color.White;
+                        lblmin.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmin);
+
+                        //adding max level
+
+                        Label lblmax = new Label();
+                        lblmax.Font = fontChannelminmax;
+                        lblmax.AutoSize = true;
+                        lblmax.Text = "Max = " + drow["maxlevel"].ToString();
+
+
+                        SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+                        lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+                        lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+                        var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+                        Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+                        lblmax.Location = pointmaxlevel;
+
+                        lblmax.ForeColor = Color.White;
+                        lblmax.BorderStyle = BorderStyle.FixedSingle;
+                        p.Controls.Add(lblmax);
+
                     }
                     Controls.Add(p);
                     
@@ -322,26 +1122,14 @@ namespace DeviceDataDisplay
             }
 
         }
-
-        private string getFromDB(string channelname)
-        {
-            string connectionstring = "SERVER=localhost;Database=datalogger;UID=root;Password=Raffi1971$";
-
-            MySqlConnection Connection = new MySqlConnection(connectionstring);
-            Connection.Open();
-            MySqlCommand cmd = Connection.CreateCommand();
-            cmd.CommandText = "Select display_name from channels where reference_name ='" + channelname + "'";
-            object result = cmd.ExecuteScalar();
-            return result.ToString();
-        }
-
-        private string getchannel(DataTable memchannel,string channelno)
+        
+        private DataRow getchannel(DataTable memchannel,int channelno)
         {
             var result = (from channel in memchannel.AsEnumerable()
-                         where channel.Field<string>("reference_name") == channelno
-                         select channel.Field<string>("display_name")).First<string>();
+                          where channel.Field<int>("channel_no") == channelno
+                          select channel).FirstOrDefault();
 
-            return result.ToString();
+            return result;
             
         }
         
@@ -368,7 +1156,110 @@ namespace DeviceDataDisplay
         private void setUnitsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SetUnits setunits = new SetUnits();
-            setunits.Show();
+            setunits.ShowDialog();
+        }
+
+        private void setLevelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetLevel setlevels = new SetLevel();
+            setlevels.ShowDialog();
+        }
+
+        private Panel screenbuilder(Panel p, string valuewithunits, string channelname, int minlevel, int maxlevel, Font valuefont, Font minmaxchannel)
+        {
+
+            Label lbl = new Label();
+            //Adding value to panel and units
+            Font fontChannel1 = valuefont;
+            Font fontChannelminmax = minmaxchannel;
+            lbl.Font = fontChannel1;
+            lbl.AutoSize = true;
+            lbl.Text = valuewithunits;
+            Graphics g = CreateGraphics();
+            SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
+
+            lbl.Height = Convert.ToInt32(extent.Height);
+            lbl.Width = Convert.ToInt32(extent.Width);
+            var x = (p.Width / 2) - (lbl.Width / 2);
+            Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
+
+            lbl.Location = pointvalue;
+
+            lbl.ForeColor = Color.White;
+            lbl.BorderStyle = BorderStyle.FixedSingle;
+            p.Controls.Add(lbl);
+
+            //Adding channel to panel
+            
+
+            Label lblchannelname = new Label();
+            lblchannelname.Font = fontChannelminmax;
+            lblchannelname.AutoSize = true;
+            lblchannelname.Text = channelname;
+
+
+            SizeF extentchannel = g.MeasureString(lblchannelname.Text, lblchannelname.Font);
+
+            lblchannelname.Height = Convert.ToInt32(extentchannel.Height);
+            lblchannelname.Width = Convert.ToInt32(extentchannel.Width);
+
+            var xchannelname = (p.Width / 2) - (lblchannelname.Width / 2);
+            Point pointvaluechannelname = new Point(xchannelname, (p.Height / 8));
+
+            lblchannelname.Location = pointvaluechannelname;
+
+            lblchannelname.ForeColor = Color.White;
+            lblchannelname.BorderStyle = BorderStyle.FixedSingle;
+            p.Controls.Add(lblchannelname);
+
+            //adding min level
+
+            Label lblmin = new Label();
+            lblmin.Font = fontChannelminmax;
+            lblmin.AutoSize = true;
+            lblmin.Text = "Min = " + minlevel.ToString();
+
+
+            SizeF extentminlevel = g.MeasureString(lblmin.Text, lblmin.Font);
+
+            lblmin.Height = Convert.ToInt32(extentminlevel.Height);
+            lblmin.Width = Convert.ToInt32(extentminlevel.Width);
+
+            var xminlevel = (p.Width / 2) - (lblmin.Width / 2);
+            Point pointminlevel = new Point(xminlevel, Convert.ToInt32((p.Height * .65)));
+
+            lblmin.Location = pointminlevel;
+
+            lblmin.ForeColor = Color.White;
+            lblmin.BorderStyle = BorderStyle.FixedSingle;
+            p.Controls.Add(lblmin);
+
+            //adding max level
+
+            Label lblmax = new Label();
+            lblmax.Font = fontChannelminmax;
+            lblmax.AutoSize = true;
+            lblmax.Text = "Max = " + maxlevel.ToString();
+
+
+            SizeF extentmaxlevel = g.MeasureString(lblmax.Text, lblmax.Font);
+
+            lblmax.Height = Convert.ToInt32(extentmaxlevel.Height);
+            lblmax.Width = Convert.ToInt32(extentmaxlevel.Width);
+
+            var xmaxlevel = (p.Width / 2) - (lblmax.Width / 2);
+            Point pointmaxlevel = new Point(xmaxlevel, Convert.ToInt32((p.Height * .80)));
+
+            lblmax.Location = pointmaxlevel;
+
+            lblmax.ForeColor = Color.White;
+            lblmax.BorderStyle = BorderStyle.FixedSingle;
+            p.Controls.Add(lblmax);
+
+
+
+
+            return p;
         }
     }
 }
