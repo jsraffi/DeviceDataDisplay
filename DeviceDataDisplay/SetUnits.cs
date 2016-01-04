@@ -29,69 +29,70 @@ namespace DeviceDataDisplay
 
             using(MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
             { 
-                    Connection.Open();
-                    string query = "Select Channel_no,reference_name,units from channels";
-                    MySqlDataAdapter channeladapter = new MySqlDataAdapter(query, Connection);
-                    DataSet channelsdata = new DataSet();
-                    channeladapter.Fill(channelsdata, "channels");
+                Connection.Open();
+                string query = "Select Channel_no,channel_name,units from channels";
+                MySqlDataAdapter channeladapter = new MySqlDataAdapter(query, Connection);
+                DataSet channelsdata = new DataSet();
+                channeladapter.Fill(channelsdata, "channels");
 
-                    //Datasource for dataviewgrid is set to channels dataset;
-                    //based on the query defined
-                    ChannelsGV.DataSource = channelsdata.Tables["channels"];
-                    ChannelsGV.Columns["Channel_no"].ReadOnly = true;
-                    ChannelsGV.Columns["reference_name"].ReadOnly = true;
-                    ChannelsGV.Columns["units"].ReadOnly = false;
+                //Datasource for dataviewgrid is set to channels dataset;
+                //based on the query defined
+                ChannelsGV.DataSource = channelsdata.Tables["channels"];
+                ChannelsGV.Columns["Channel_no"].ReadOnly = true;
+                ChannelsGV.Columns["channel_name"].ReadOnly = true;
+                ChannelsGV.Columns["units"].ReadOnly = false;
 
-                    //query for units table is defined
-                    string queryunits = "Select * from unitsofmesurement order by UnitID";
+                //query for units table is defined
+                string queryunits = "Select * from unitsofmesurement order by UnitID";
 
                     
-                    //An sql adapter is opened
-                    MySqlDataAdapter unitsadapter = new MySqlDataAdapter(queryunits, Connection);
+                //An sql adapter is opened
+                MySqlDataAdapter unitsadapter = new MySqlDataAdapter(queryunits, Connection);
                     
-                    //units table dataset is defined   
-                    DataSet unitsdata = new DataSet();
-                    unitsadapter.Fill(unitsdata, "unitsofmesurement");
+                //units table dataset is defined   
+                DataSet unitsdata = new DataSet();
+                unitsadapter.Fill(unitsdata, "unitsofmesurement");
 
-                    //Data table for unitsofmesurement table is defined
-                    DataTable tblunits = unitsdata.Tables["unitsofmesurement"];
+                //Data table for unitsofmesurement table is defined
+                DataTable tblunits = unitsdata.Tables["unitsofmesurement"];
 
-                    //ChannelGV datagrid units colum is hidden    
-                    ChannelsGV.Columns[2].Visible = false;
-
-                    //Combo box for datagrid is created
-                    DataGridViewComboBoxCell bc = new DataGridViewComboBoxCell();
-
-                    //Combo source is set to datasource datatable of unitofmesurement table
-                    bc.DataSource = tblunits;
-                    bc.DisplayMember = "Units";// set  value to units column of unitofmesurement
-                    bc.ValueMember = "UnitID";// set index to unitid column of unitofmesurement
-
-                    //attach datagridcombo to a datagrid column
-                    DataGridViewColumn cc = new DataGridViewColumn(bc);
-                    cc.HeaderText = "Units";
-                    cc.Name = "Units";
-                    
-                    
-                    //add new column to grid;
-                    ChannelsGV.Columns.Add(cc);
-                    
-                    //loop thru the grids invsible column units of channel table
-                    // and set the value to the combobox value
-                    foreach (DataGridViewRow item in ChannelsGV.Rows)
-                    {
-                        item.Cells[3].Value = item.Cells[2].Value;
-                        item.Height = 30;    
+                //ChannelGV datagrid units colum is hidden    
+                ChannelsGV.Columns[2].Visible = false;
                 
-                    }
-                    ChannelsGV.Columns[0].Width = 125;
-                    ChannelsGV.Columns[1].Width = 200;
-                    ChannelsGV.Columns[1].HeaderText = "Channels";
-                    ChannelsGV.Columns[3].Width = 125;
+
+                //Combo box for datagrid is created
+                DataGridViewComboBoxCell bc = new DataGridViewComboBoxCell();
+
+                //Combo source is set to datasource datatable of unitofmesurement table
+                bc.DataSource = tblunits;
+                bc.DisplayMember = "Units";// set  value to units column of unitofmesurement
+                bc.ValueMember = "UnitID";// set index to unitid column of unitofmesurement
+
+                //attach datagridcombo to a datagrid column
+                DataGridViewColumn cc = new DataGridViewColumn(bc);
+                cc.HeaderText = "Units";
+                cc.Name = "Units";
                     
-                ChannelsGV.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
-                ChannelsGV.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
-                ChannelsGV.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
+                    
+                //add new column to grid;
+                ChannelsGV.Columns.Add(cc);
+                    
+                //loop thru the grids invsible column units of channel table
+                // and set the value to the combobox value
+                foreach (DataGridViewRow item in ChannelsGV.Rows)
+                {
+                    item.Cells[3].Value = item.Cells[2].Value;
+                    item.Height = 30;    
+                
+                }
+                ChannelsGV.Columns[0].Width = 125;
+                ChannelsGV.Columns[1].Width = 200;
+                ChannelsGV.Columns[1].HeaderText = "Channels";
+                ChannelsGV.Columns[3].Width = 125;
+                    
+            ChannelsGV.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
+            ChannelsGV.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+            ChannelsGV.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
 
             }
         }

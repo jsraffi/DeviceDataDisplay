@@ -32,8 +32,11 @@
             this.mainMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setLevelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ShowChannels = new System.Windows.Forms.ToolStripComboBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblSelectChannel = new System.Windows.Forms.Label();
+            this.poller = new System.Windows.Forms.Button();
+            this.pollSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainmenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -55,7 +58,9 @@
             this.mainMenuToolStripMenuItem.BackColor = System.Drawing.Color.RoyalBlue;
             this.mainMenuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.setUnitsToolStripMenuItem,
-            this.setLevelToolStripMenuItem});
+            this.setLevelToolStripMenuItem,
+            this.addUnitsToolStripMenuItem,
+            this.pollSettingsToolStripMenuItem});
             this.mainMenuToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 12F);
             this.mainMenuToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.mainMenuToolStripMenuItem.Name = "mainMenuToolStripMenuItem";
@@ -66,16 +71,23 @@
             // setUnitsToolStripMenuItem
             // 
             this.setUnitsToolStripMenuItem.Name = "setUnitsToolStripMenuItem";
-            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(181, 32);
+            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
             this.setUnitsToolStripMenuItem.Text = "Set Units";
             this.setUnitsToolStripMenuItem.Click += new System.EventHandler(this.setUnitsToolStripMenuItem_Click);
             // 
             // setLevelToolStripMenuItem
             // 
             this.setLevelToolStripMenuItem.Name = "setLevelToolStripMenuItem";
-            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(181, 32);
+            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
             this.setLevelToolStripMenuItem.Text = "Set Level";
             this.setLevelToolStripMenuItem.Click += new System.EventHandler(this.setLevelToolStripMenuItem_Click);
+            // 
+            // addUnitsToolStripMenuItem
+            // 
+            this.addUnitsToolStripMenuItem.Name = "addUnitsToolStripMenuItem";
+            this.addUnitsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.addUnitsToolStripMenuItem.Text = "Add Units";
+            this.addUnitsToolStripMenuItem.Click += new System.EventHandler(this.addUnitsToolStripMenuItem_Click);
             // 
             // ShowChannels
             // 
@@ -83,16 +95,37 @@
             this.ShowChannels.Size = new System.Drawing.Size(121, 32);
             this.ShowChannels.SelectedIndexChanged += new System.EventHandler(this.ShowChannels_SelectedIndexChanged);
             // 
-            // label1
+            // lblSelectChannel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Arial Unicode MS", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.White;
-            this.label1.Location = new System.Drawing.Point(230, 6);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(130, 23);
-            this.label1.TabIndex = 2;
-            this.label1.Text = "Select Channels";
+            this.lblSelectChannel.Font = new System.Drawing.Font("Arial Unicode MS", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSelectChannel.ForeColor = System.Drawing.Color.Black;
+            this.lblSelectChannel.Location = new System.Drawing.Point(228, 2);
+            this.lblSelectChannel.Name = "lblSelectChannel";
+            this.lblSelectChannel.Size = new System.Drawing.Size(130, 26);
+            this.lblSelectChannel.TabIndex = 2;
+            this.lblSelectChannel.Text = "Select Channels";
+            this.lblSelectChannel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // poller
+            // 
+            this.poller.FlatAppearance.BorderSize = 0;
+            this.poller.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.poller.Font = new System.Drawing.Font("Arial Unicode MS", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.poller.Location = new System.Drawing.Point(359, 1);
+            this.poller.Name = "poller";
+            this.poller.Size = new System.Drawing.Size(97, 27);
+            this.poller.TabIndex = 3;
+            this.poller.TabStop = false;
+            this.poller.Text = "Connect";
+            this.poller.UseVisualStyleBackColor = false;
+            this.poller.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // pollSettingsToolStripMenuItem
+            // 
+            this.pollSettingsToolStripMenuItem.Name = "pollSettingsToolStripMenuItem";
+            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.pollSettingsToolStripMenuItem.Text = "Poll Settings";
+            this.pollSettingsToolStripMenuItem.Click += new System.EventHandler(this.pollSettingsToolStripMenuItem_Click);
             // 
             // DeviceDataDisplay
             // 
@@ -101,7 +134,8 @@
             this.AutoScroll = true;
             this.BackColor = System.Drawing.Color.RoyalBlue;
             this.ClientSize = new System.Drawing.Size(767, 285);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.poller);
+            this.Controls.Add(this.lblSelectChannel);
             this.Controls.Add(this.mainmenuStrip);
             this.Font = new System.Drawing.Font("Arial Unicode MS", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MaximizeBox = false;
@@ -109,6 +143,7 @@
             this.RightToLeftLayout = true;
             this.Text = "Devices Data Display";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DeviceDataDisplay_FormClosing);
             this.Load += new System.EventHandler(this.DeviceDataDisplay_Load);
             this.mainmenuStrip.ResumeLayout(false);
             this.mainmenuStrip.PerformLayout();
@@ -122,8 +157,11 @@
         private System.Windows.Forms.ToolStripMenuItem mainMenuToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem setUnitsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem setLevelToolStripMenuItem;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblSelectChannel;
         private System.Windows.Forms.ToolStripComboBox ShowChannels;
+        private System.Windows.Forms.ToolStripMenuItem addUnitsToolStripMenuItem;
+        private System.Windows.Forms.Button poller;
+        private System.Windows.Forms.ToolStripMenuItem pollSettingsToolStripMenuItem;
     }
 }
 

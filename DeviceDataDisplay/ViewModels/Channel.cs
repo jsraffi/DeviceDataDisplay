@@ -11,7 +11,7 @@ namespace DeviceDataDisplay.ViewModels
         public int channel_no { get; set; }
         public string display_name { get; set; }
 
-        public string reference_name { get; set; }
+        public string channel_name { get; set; }
 
         public string unitmesure { get; set; }
 
