@@ -33,10 +33,11 @@
             this.setUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setLevelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pollSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ShowChannels = new System.Windows.Forms.ToolStripComboBox();
             this.lblSelectChannel = new System.Windows.Forms.Label();
             this.poller = new System.Windows.Forms.Button();
-            this.pollSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lblStatus = new System.Windows.Forms.Label();
             this.mainmenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -89,6 +90,13 @@
             this.addUnitsToolStripMenuItem.Text = "Add Units";
             this.addUnitsToolStripMenuItem.Click += new System.EventHandler(this.addUnitsToolStripMenuItem_Click);
             // 
+            // pollSettingsToolStripMenuItem
+            // 
+            this.pollSettingsToolStripMenuItem.Name = "pollSettingsToolStripMenuItem";
+            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.pollSettingsToolStripMenuItem.Text = "Poll Settings";
+            this.pollSettingsToolStripMenuItem.Click += new System.EventHandler(this.pollSettingsToolStripMenuItem_Click);
+            // 
             // ShowChannels
             // 
             this.ShowChannels.Name = "ShowChannels";
@@ -120,12 +128,18 @@
             this.poller.UseVisualStyleBackColor = false;
             this.poller.Click += new System.EventHandler(this.button1_Click);
             // 
-            // pollSettingsToolStripMenuItem
+            // lblStatus
             // 
-            this.pollSettingsToolStripMenuItem.Name = "pollSettingsToolStripMenuItem";
-            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
-            this.pollSettingsToolStripMenuItem.Text = "Poll Settings";
-            this.pollSettingsToolStripMenuItem.Click += new System.EventHandler(this.pollSettingsToolStripMenuItem_Click);
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.Font = new System.Drawing.Font("Arial Unicode MS", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblStatus.ForeColor = System.Drawing.Color.White;
+            this.lblStatus.Location = new System.Drawing.Point(458, 4);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(58, 23);
+            this.lblStatus.TabIndex = 4;
+            this.lblStatus.Text = "Status";
+            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblStatus.Click += new System.EventHandler(this.label1_Click);
             // 
             // DeviceDataDisplay
             // 
@@ -134,6 +148,7 @@
             this.AutoScroll = true;
             this.BackColor = System.Drawing.Color.RoyalBlue;
             this.ClientSize = new System.Drawing.Size(767, 285);
+            this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.poller);
             this.Controls.Add(this.lblSelectChannel);
             this.Controls.Add(this.mainmenuStrip);
@@ -162,6 +177,7 @@
         private System.Windows.Forms.ToolStripMenuItem addUnitsToolStripMenuItem;
         private System.Windows.Forms.Button poller;
         private System.Windows.Forms.ToolStripMenuItem pollSettingsToolStripMenuItem;
+        private System.Windows.Forms.Label lblStatus;
     }
 }
 

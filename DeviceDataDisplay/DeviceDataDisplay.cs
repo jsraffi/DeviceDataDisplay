@@ -10,13 +10,18 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using System.Configuration;
-using DeviceDataDisplay.ViewModels;
 using System.Threading;
+using DeviceDataDisplay.Modbus;
+using System.IO.Ports;
 
 namespace DeviceDataDisplay
 {
     public partial class DeviceDataDisplay : Form
     {
+        modbus mb = new modbus();
+
+        SerialPort sp = new SerialPort();
+
         System.Threading.Timer tmrChannel1;
         System.Threading.Timer tmrChannel2;
         System.Threading.Timer tmrChannel3;
@@ -49,7 +54,7 @@ namespace DeviceDataDisplay
         System.Threading.Timer tmrChannel30;
         System.Threading.Timer tmrChannel31;
         System.Threading.Timer tmrChannel32;
-        bool flag1 = true;
+        bool firstcalltochannel1 = true;
         bool flag2 = true;
         bool flag3 = true;
         bool flag4 = true;
@@ -72,6 +77,7 @@ namespace DeviceDataDisplay
         bool flag21 = true;
         bool flag22 = true;
         bool flag23 = true;
+        bool flag24 = true;
         bool flag25 = true;
         bool flag26= true;
         bool flag27 = true;
@@ -82,7 +88,13 @@ namespace DeviceDataDisplay
         bool flag32 = true;
         bool flag = true;
 
-        int CurrentNoOfChannels = 0;
+        //loading database values in list for the device
+        List<ushort> devicevalues1 = new List<ushort>();
+        Dictionary<ushort, int> deviceresolution1 = new Dictionary<ushort, int>();
+        Dictionary<ushort, string> deviceunits1 = new Dictionary<ushort, string>();
+
+       
+        int CurrentNoOfChannelSelected = 0;
         public DeviceDataDisplay()
         {
             InitializeComponent();
@@ -99,35 +111,169 @@ namespace DeviceDataDisplay
             ShowChannels.Items.AddRange(channels);
 
             ChannelSetting();
-
-             
-
         }
 
         private void ChannelTimer1(object state)
         {
-            
-            if (flag == true)
+            try
             {
-                this.Invoke((MethodInvoker)delegate
+                if (firstcalltochannel1)
                 {
-                    var p = Controls.Find("Channel1",false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
-                });
-                flag = false;
-            }
-            else
-            {
-                
-                this.Invoke((MethodInvoker)delegate
-                {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
-                });
+                    if(devicevalues1.Count > 0)
+                    {
+                        devicevalues1.Clear();
+                    }
 
-                flag = true;
+                    if (deviceresolution1.Count > 0)
+                    {
+                        deviceresolution1.Clear();
+                    }
+                    if (deviceunits1.Count > 0)
+                    {
+                        deviceunits1.Clear();
+                    }
+                    MySqlConnection Connection1 = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]);
+                    Connection1.Open();
+                    string querydev = "select deviceID from devices_to_channels where channelID =1";
+                    MySqlCommand getdevice = new MySqlCommand(querydev, Connection1);
+
+                    int deviceID = (int) getdevice.ExecuteScalar();
+
+                    string query = "Select deviceID,device_name,slaveID,value_start_address,value_return_datatype,unit_start_address,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,Endianess from devices where deviceID ="+ deviceID;
+                    getdevice.CommandText = query;
+                    getdevice.Connection = Connection1;
+                    MySqlDataReader devicereader = getdevice.ExecuteReader();
+                    string device_name = "";
+               
+                    if(devicereader.HasRows )
+                    {
+                        while(devicereader.Read())
+                        {
+                            devicevalues1.Add(devicereader.GetUInt16(0));//deviceID 0
+                            device_name = devicereader.GetString(1); //device_name
+                            devicevalues1.Add(devicereader.GetUInt16(2));//slaveID 1
+                            devicevalues1.Add(devicereader.GetUInt16(3));//value_start_address 2
+                            devicevalues1.Add(devicereader.GetUInt16(4));//value_return_datatype 3
+
+                           /* 4 unit_start_address*/ devicevalues1.Add((!(devicereader.IsDBNull(5)) ? devicereader.GetUInt16(5):Convert.ToUInt16(60000)));
+                           /* 5unit_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(6)) ? devicereader.GetUInt16(6) : Convert.ToUInt16(60000)));
+                           /* 6alarm_start_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(7)) ? devicereader.GetUInt16(7) : Convert.ToUInt16(60000))); 
+                           /* 7alarm_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(8)) ? devicereader.GetUInt16(8) : Convert.ToUInt16(60000))); 
+                            /* 8resolution_start_address */devicevalues1.Add((!(devicereader.IsDBNull(9)) ? devicereader.GetUInt16(9) : Convert.ToUInt16(60000)));
+                           /* 9resolution_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(10)) ? devicereader.GetUInt16(10) : Convert.ToUInt16(60000)));
+                           /* 10Endianess */devicevalues1.Add((!(devicereader.IsDBNull(11)) ? devicereader.GetUInt16(11) : Convert.ToUInt16(60000)));
+                        }
+                    }
+
+                    devicereader.Close();
+
+                    if(devicevalues1[4]!= 60000)
+                    {
+                        var queryunits = "Select units_index,units_value from device_units where deviceID="+ deviceID +" order by units_index ";
+                        getdevice.CommandText = queryunits;
+                        getdevice.Connection = Connection1;
+                        MySqlDataReader unitReader = getdevice.ExecuteReader();
+
+                        if (unitReader.HasRows)
+                        {
+                            while (unitReader.Read())
+                            {
+                                deviceunits1.Add(unitReader.GetUInt16(0),unitReader.GetString(1));
+                            }
+                        }
+                        unitReader.Close();
+                    }
+                    
+                    if(devicevalues1[8] != 60000)
+                    { 
+                        var queryres = "Select resolution_index,resolution_value from device_resolution where deviceID="+ deviceID + " order by resolution_index ";
+                        getdevice.CommandText = queryres;
+                        getdevice.Connection = Connection1;
+                        MySqlDataReader resolutionReader = getdevice.ExecuteReader();
+
+                        if(resolutionReader.HasRows)
+                        {
+                            while(resolutionReader.Read())
+                            {
+                                deviceresolution1.Add(resolutionReader.GetUInt16(0),resolutionReader.GetInt32(1));
+                            }
+                        }
+                        resolutionReader.Close();
+                    }
+                    
+                    firstcalltochannel1 = false;
+                }
+               
+                try {
+
+                    //reteriving units values
+
+                    ushort[] unit_value = new ushort[devicevalues1[5]];
+                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unit_value);
+
+                    string unit_value_db = "";
+                    for (int i = 0; i < devicevalues1[5]; i++)
+                    {
+                        unit_value_db = deviceunits1.First(k => k.Key == unit_value[i]).Value;
+                        break;
+                    }
+                    Thread.Sleep(50);
+                    //for value reteriving
+                    int intValue=0;
+                    ushort[] values = new ushort[devicevalues1[4]];
+                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[2], devicevalues1[3], ref values);
+                    for (int i = 0; i < devicevalues1[3] / 2; i++)
+                    {
+                        intValue = values[2 * i];
+                        intValue <<= 16;
+                        intValue += values[2 * i + 1];
+                    }
+                    Thread.Sleep(50);
+                    //get resolution
+                    ushort[] resolution_value = new ushort[devicevalues1[9]];
+                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[8], devicevalues1[9], ref resolution_value);
+                    
+
+                    double dval = (double)intValue;
+                    string itemString = "";
+
+                    foreach(var resolution in deviceresolution1)
+                    {
+                        if(resolution.Key == resolution_value[0])
+                        {
+                            string resval = resolution.Value.ToString();
+                            string decimalplaces = "0." + resval.Substring(1, (resval.Length-1));
+                            itemString = (dval / resolution.Value).ToString(decimalplaces) + " " + unit_value_db;
+                        }
+                    }
+                    
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        var p = Controls.Find("Channel1", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = itemString;
+                    });
+                    
+                }
+                catch(Exception err)
+                {
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                            lblStatus.Text = "Error in modbus read: " + err.Message;
+                        });
+
+                }
             }
-                tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            catch (Exception err)
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    lblStatus.Text="DB or thread Error: " + err.Message;
+                });
+            }
+            if(firstcalltochannel1 == false)
+            { 
+                tmrChannel1.Change(TimeSpan.FromMilliseconds(50), TimeSpan.FromMilliseconds(-1));
+            }
         }
         
         private void ChannelTimer2(object state)
@@ -287,644 +433,657 @@ namespace DeviceDataDisplay
         private void ChannelTimer8(object state)
         {
 
-            if (flag == true)
+            /*if (flag8 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel8", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel8").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag8 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel8", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel8").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag8 = true;
+            }*/
+            try
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    var p = Controls.Find("Channel8", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel8").ForeColor = Color.Red;
+                });
+
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            catch(Exception e)
+            {
+
+            }
+            tmrChannel8.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer9(object state)
         {
 
-            if (flag == true)
+            if (flag9 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel9", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel9").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag9 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel9", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel9").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag9 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel9.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer10(object state)
         {
 
-            if (flag == true)
+            if (flag10 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel10", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel10").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag10 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel10", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel10").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag10 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel10.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer11(object state)
         {
 
-            if (flag == true)
+            if (flag11 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel11", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel11").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag11 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel11", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel11").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag11 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel11.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer12(object state)
         {
 
-            if (flag == true)
+            if (flag12 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel12", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel12").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag12 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel12", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel12").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag12 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel12.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer13(object state)
         {
 
-            if (flag == true)
+            if (flag13 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel13", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel13").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag13 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel13", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel13").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag13 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel13.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer14(object state)
         {
 
-            if (flag == true)
+            if (flag14 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel14", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel14").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag14 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel14", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel14").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag14 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel14.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer15(object state)
         {
 
-            if (flag == true)
+            if (flag15 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel15", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel15").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag15 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel15", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel15").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag15 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel15.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer16(object state)
         {
 
-            if (flag == true)
+            if (flag16 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel16", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel16").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag16 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel16", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel16").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag16 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel16.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer17(object state)
         {
 
-            if (flag == true)
+            if (flag17 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel17", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel17").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag17 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel17", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel17").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag17 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel17.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer18(object state)
         {
 
-            if (flag == true)
+            if (flag18 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel18", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel18").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag18 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel18", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel18").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag18 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel18.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer19(object state)
         {
 
-            if (flag == true)
+            if (flag19 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel19", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel19").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag19 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel19", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel19").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag19 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel19.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer20(object state)
         {
 
-            if (flag == true)
+            if (flag20 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel20", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel20").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag20 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel20", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel20").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag20 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel20.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer21(object state)
         {
 
-            if (flag == true)
+            if (flag21 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel21", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel21").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag21= false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel21", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel21").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag21 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel21.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
         private void ChannelTimer22(object state)
         {
 
-            if (flag == true)
+            if (flag22 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel22", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel22").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag22 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel22", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel22").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag22 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel22.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer23(object state)
         {
 
-            if (flag == true)
+            if (flag23 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel23", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel23").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag23 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel23", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel23").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag23 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel23.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer24(object state)
         {
 
-            if (flag == true)
+            if (flag24 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel24", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel24").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag24 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel24", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel24").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag24 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel24.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer25(object state)
         {
 
-            if (flag == true)
+            if (flag25 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel25", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel25").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag25 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel25", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel25").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag25 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel25.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
 
         private void ChannelTimer26(object state)
         {
 
-            if (flag == true)
+            if (flag26 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel26", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel26").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag26 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel26", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel26").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag26 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel26.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
 
         private void ChannelTimer27(object state)
         {
 
-            if (flag == true)
+            if (flag27 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel27", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel27").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag27 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel27", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel27").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag27 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel27.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer28(object state)
         {
 
-            if (flag == true)
+            if (flag28 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel28", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel28").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag28 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel28", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel28").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag28 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel28.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer29(object state)
         {
 
-            if (flag == true)
+            if (flag29 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel29", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel29").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag29 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel29", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel29").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag29 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel29.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer30(object state)
         {
 
-            if (flag == true)
+            if (flag30 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel30", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel30").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag30 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel30", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel30").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag30 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel30.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer31(object state)
         {
 
-            if (flag == true)
+            if (flag31 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel31", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel31").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag31 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel31", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel31").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag31 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel31.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
         private void ChannelTimer32(object state)
         {
 
-            if (flag == true)
+            if (flag32 == true)
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Red;
+                    var p = Controls.Find("Channel32", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel32").ForeColor = Color.Red;
                 });
-                flag = false;
+                flag32 = false;
             }
             else
             {
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    var p = Controls.Find("Channel1", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").ForeColor = Color.Green;
+                    var p = Controls.Find("Channel32", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel32").ForeColor = Color.Green;
                 });
 
-                flag = true;
+                flag32 = true;
             }
-            tmrChannel1.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
+            tmrChannel32.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
 
 
@@ -1386,10 +1545,10 @@ namespace DeviceDataDisplay
 
         private void ShowChannels_SelectedIndexChanged(object sender, EventArgs e)
         {
-            int channelNo = Convert.ToInt32(ShowChannels.SelectedItem.ToString());
+            CurrentNoOfChannelSelected = Convert.ToInt32(ShowChannels.SelectedItem.ToString());
             for (int i = Controls.Count - 1; i >= 0; i--)
             {
-                if (Controls[i].Name != "mainmenuStrip" && Controls[i].Name != "lblSelectChannel" && Controls[i].Name != "poller")
+                if (Controls[i].Name != "mainmenuStrip" && Controls[i].Name != "lblSelectChannel" && Controls[i].Name != "poller" && Controls[i].Name != "lblStatus")
                 {
                     
                     Controls[i].Dispose();
@@ -1397,7 +1556,7 @@ namespace DeviceDataDisplay
                 }
             }
             
-            ChannelSetting(channelNo, 3, 3);
+            ChannelSetting(CurrentNoOfChannelSelected, 3, 3);
 
         }
 
@@ -1542,17 +1701,32 @@ namespace DeviceDataDisplay
             Button btnpoller = (Button)sender;
             if(btnpoller.Text == "Connect")
             {
-                ShowChannels.Enabled = false;
-                CallTimers(7);
-                btnpoller.Text = "Disconnect";
-                
-               
+                if (ShowChannels.SelectedItem == null)
+                {
+                    CurrentNoOfChannelSelected = 1;
+                    if (OpenPort()) { 
+                        ShowChannels.Enabled = false;
+                        CallTimers(CurrentNoOfChannelSelected);
+                        btnpoller.Text = "Disconnect";
+                    }
+                }
+                else
+                {
+                    if (OpenPort())
+                    {
+                        ShowChannels.Enabled = false;
+                        CallTimers(CurrentNoOfChannelSelected);
+                        btnpoller.Text = "Disconnect";
+                    }
+                }
+
             }
             else if(btnpoller.Text=="Disconnect")
             {
+                ClosePort();
                 ShowChannels.Enabled = true;
                 btnpoller.Text = "Connect";
-                StopTimers(7);
+                StopTimers(CurrentNoOfChannelSelected);
             }
         }
 
@@ -1602,7 +1776,7 @@ namespace DeviceDataDisplay
             if (nofotimers == 1)
             {
                 tmrChannel1 = new System.Threading.Timer(ChannelTimer1, "", Timeout.Infinite, Timeout.Infinite);
-                tmrChannel1.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(1000));
+                tmrChannel1.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(2000));
 
             }
             else if (nofotimers == 2)
@@ -3297,6 +3471,7 @@ namespace DeviceDataDisplay
             {
                 
                 tmrChannel1.Change(Timeout.Infinite, Timeout.Infinite);
+                firstcalltochannel1 = true;
 
             }
             else if (nofotimers == 2)
@@ -4983,7 +5158,28 @@ namespace DeviceDataDisplay
 
         private void DeviceDataDisplay_FormClosing(object sender, FormClosingEventArgs e)
         {
-           
+            //Connection1.Close();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+        private bool OpenPort()
+        { 
+            if (mb.Open("COM9", 9600, 8, Parity.None, StopBits.One))
+            {
+                lblStatus.Text = "Status: " + mb.modbusStatus;
+                return true;
+            }
+            
+            lblStatus.Text ="Status: "+mb.modbusStatus;
+            return false;
+        }
+        private void ClosePort()
+        {
+            mb.Close();
+            lblStatus.Text =  "Staus : " + mb.modbusStatus;
         }
     }
 }
