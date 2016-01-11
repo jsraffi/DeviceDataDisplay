@@ -44,7 +44,7 @@ namespace DeviceDataDisplay.Modbus
                     modbusStatus = "Error opening " + portName + ": " + err.Message;
                     return false;
                 }
-                modbusStatus = portName + " opened successfully";
+                modbusStatus = "Connected thru " + portName + " Polling started";
                 return true;
             }
             else

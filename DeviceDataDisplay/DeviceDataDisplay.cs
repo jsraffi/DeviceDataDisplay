@@ -54,7 +54,7 @@ namespace DeviceDataDisplay
         System.Threading.Timer tmrChannel30;
         System.Threading.Timer tmrChannel31;
         System.Threading.Timer tmrChannel32;
-        bool firstcalltochannel1 = true;
+        
         bool flag2 = true;
         bool flag3 = true;
         bool flag4 = true;
@@ -88,12 +88,15 @@ namespace DeviceDataDisplay
         bool flag32 = true;
         bool flag = true;
 
+        bool ConnectionStatus = false;
+
         //loading database values in list for the device
         List<ushort> devicevalues1 = new List<ushort>();
         Dictionary<ushort, int> deviceresolution1 = new Dictionary<ushort, int>();
         Dictionary<ushort, string> deviceunits1 = new Dictionary<ushort, string>();
+        string lastdisplayedvalue;
+        bool firstcalltochannel1 = true;
 
-       
         int CurrentNoOfChannelSelected = 0;
         public DeviceDataDisplay()
         {
@@ -119,7 +122,9 @@ namespace DeviceDataDisplay
             {
                 if (firstcalltochannel1)
                 {
-                    if(devicevalues1.Count > 0)
+                    //if application is running not offloaded the following list and dictionary needs to be cleared
+                    //because channel setting connected to  a device may have changed 
+                    if (devicevalues1.Count > 0)
                     {
                         devicevalues1.Clear();
                     }
@@ -132,19 +137,24 @@ namespace DeviceDataDisplay
                     {
                         deviceunits1.Clear();
                     }
+
                     MySqlConnection Connection1 = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]);
                     Connection1.Open();
                     string querydev = "select deviceID from devices_to_channels where channelID =1";
                     MySqlCommand getdevice = new MySqlCommand(querydev, Connection1);
 
+                    // get the device id for channel 1
                     int deviceID = (int) getdevice.ExecuteScalar();
 
+                    //get the device setting for channel1
                     string query = "Select deviceID,device_name,slaveID,value_start_address,value_return_datatype,unit_start_address,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,Endianess from devices where deviceID ="+ deviceID;
                     getdevice.CommandText = query;
                     getdevice.Connection = Connection1;
                     MySqlDataReader devicereader = getdevice.ExecuteReader();
                     string device_name = "";
                
+                    //add device data to list devicevalues1
+
                     if(devicereader.HasRows )
                     {
                         while(devicereader.Read())
@@ -167,6 +177,10 @@ namespace DeviceDataDisplay
 
                     devicereader.Close();
 
+                    //adding units value to dictionary from db one time, if the value is set as null
+                    //by the user an out of range value of 6000 is set to check for nullable values
+                    // a nullable ushort cannot be defined as modbus expect non-nullable datatype
+
                     if(devicevalues1[4]!= 60000)
                     {
                         var queryunits = "Select units_index,units_value from device_units where deviceID="+ deviceID +" order by units_index ";
@@ -184,6 +198,7 @@ namespace DeviceDataDisplay
                         unitReader.Close();
                     }
                     
+                    // same as units if resolution is defined than add those values to dictionary
                     if(devicevalues1[8] != 60000)
                     { 
                         var queryres = "Select resolution_index,resolution_value from device_resolution where deviceID="+ deviceID + " order by resolution_index ";
@@ -200,53 +215,118 @@ namespace DeviceDataDisplay
                         }
                         resolutionReader.Close();
                     }
-                    
+                    // get database values for just once store it in list and dictionary's and set the flag to false
                     firstcalltochannel1 = false;
                 }
                
+                // try catch inside try catch just to get modbus errors
                 try {
 
                     //reteriving units values
-
-                    ushort[] unit_value = new ushort[devicevalues1[5]];
-                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unit_value);
-
+                    //poll modbus if units are confgured by the user
                     string unit_value_db = "";
-                    for (int i = 0; i < devicevalues1[5]; i++)
-                    {
-                        unit_value_db = deviceunits1.First(k => k.Key == unit_value[i]).Value;
-                        break;
+                    //array postion 4 denotes unit value address
+                    if (devicevalues1[4] != 60000)
+                    {   
+                        //address 5 denotes the return address type of units, 16bit(integer in C short in C#)or long.
+                        // In this case it is integer (short), length of addresses to be read is one for integer
+                        //and 2 for long or int32 in C#
+                        ushort[] unit_value = new ushort[devicevalues1[5]];
+
+                        //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unit_value);
+                        
+                        // get the units value from dictionary using key we get from device
+                        unit_value_db = deviceunits1.First(k => k.Key == unit_value[0]).Value;
+
+                        //allow the sometimme gap before requesting the meter
+                        Thread.Sleep(50);
                     }
-                    Thread.Sleep(50);
+                    
                     //for value reteriving
                     int intValue=0;
-                    ushort[] values = new ushort[devicevalues1[4]];
-                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[2], devicevalues1[3], ref values);
-                    for (int i = 0; i < devicevalues1[3] / 2; i++)
-                    {
-                        intValue = values[2 * i];
-                        intValue <<= 16;
-                        intValue += values[2 * i + 1];
-                    }
-                    Thread.Sleep(50);
-                    //get resolution
-                    ushort[] resolution_value = new ushort[devicevalues1[9]];
-                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[8], devicevalues1[9], ref resolution_value);
-                    
+                    //value devicevalue1[3]  denotes meter value return datatype, 
+                    // if its ulong or int32 , modbus returns two 16 bit values
+                    //which needs to be bit shifted to create a 32 bit value
+                    //devicevalue1[2]= meter value start address
+                    if (devicevalues1[3]==2)
+                    { 
+                        ushort[] values = new ushort[devicevalues1[3]];
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[2], devicevalues1[3], ref values);
+                        //concat two 16 bit values using loop
+                        //devicevalues1[10] holds the value for endianess 0=little endian and 1 = big endian
+                        if (devicevalues1[10] == 0)
+                        { 
+                            for (int i = 0; i < devicevalues1[3] / 2; i++)
+                            {
+                                intValue = values[2 * i];
+                                intValue <<= 16;
+                                intValue += values[2 * i + 1];//for little endian
+                            }
+                        }
+                        else if(devicevalues1[10] == 1)
+                        {
+                            for (int i = 0; i < devicevalues1[3] / 2; i++)
+                            {
+                                intValue = values[2 * i +1];
+                                intValue <<= 16;
+                                intValue += values[2 * i];//for big endian 
+                            }
 
+                        }
+                        Thread.Sleep(50);
+                    }
+                    else if(devicevalues1[3] == 1)// if meter value return datatype is ushort or integer(C) no need shift it is only 16bit value
+                    {
+                        ushort[] values = new ushort[devicevalues1[3]];
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[2], devicevalues1[3], ref values);
+                        intValue = (int)values[0];
+                        Thread.Sleep(50);
+
+                    }
+                    //get resolution
                     double dval = (double)intValue;
                     string itemString = "";
-
-                    foreach(var resolution in deviceresolution1)
+                    // same like units only address begin and end value changes/see while loop to know address
+                    if (devicevalues1[8] != 60000)
                     {
-                        if(resolution.Key == resolution_value[0])
-                        {
-                            string resval = resolution.Value.ToString();
-                            string decimalplaces = "0." + resval.Substring(1, (resval.Length-1));
-                            itemString = (dval / resolution.Value).ToString(decimalplaces) + " " + unit_value_db;
+                        ushort[] resolution_value = new ushort[devicevalues1[9]];
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[8], devicevalues1[9], ref resolution_value);
+                        //loop thru the reoslution dictionary
+                        foreach (var resolution in deviceresolution1)
+                        {   
+                            // if the key matchess the meter returned value
+                            if (resolution.Key == resolution_value[0])
+                            {   
+                                string resval = resolution.Value.ToString();// get the value for the matched key
+                                //to format for decimal places we have to give value like ex "0.00" for two decimals to ToSring("0.00")
+                                //the db value for decimal places returns 1000,100,10 or 1, except for 1 all values
+                                //will be formated for decimal places
+                                
+                                if (resolution.Value != 1)
+                                {
+                                    string decimalplaces = "0." + resval.Substring(1, (resval.Length - 1));
+                                    itemString = (dval / resolution.Value).ToString(decimalplaces) + " " + unit_value_db;
+                                }
+                                else if(resolution.Value == 1)
+                                {
+                                    itemString = dval.ToString() + " " + unit_value_db;
+                                }
+                                
+                                
+                            }
                         }
+                        Thread.Sleep(50);
                     }
-                    
+
+                    if(itemString=="")
+                    {
+                        string unints = (unit_value_db != "") ? " " + unit_value_db : "";
+                        itemString = intValue.ToString() + unints;
+                    }
+
+                    lastdisplayedvalue = itemString;
+
                     this.Invoke((MethodInvoker)delegate
                     {
                         var p = Controls.Find("Channel1", false);
@@ -257,10 +337,24 @@ namespace DeviceDataDisplay
                 catch(Exception err)
                 {
                         this.Invoke((MethodInvoker)delegate
-                        {
+                        {   
                             lblStatus.Text = "Error in modbus read: " + err.Message;
                         });
+                }
+                finally
+                {
+                    if (ConnectionStatus == false)
+                    {
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                            var p = Controls.Find("Channel1", false);
+                            p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = lastdisplayedvalue;
 
+                            lblStatus.Text = "Timer polling stopped ";
+                        });
+                        tmrChannel1.Dispose();
+                    }
+                    
                 }
             }
             catch (Exception err)
@@ -1182,7 +1276,7 @@ namespace DeviceDataDisplay
             
             MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]);
             Connection.Open();
-            string query = "Select channel_no,display_name,channel_name,um.units as unitsmesure,value,minlevel,maxlevel,onlyminlevel,onlymaxlevel from channels ch inner join unitsofmesurement um on ch.units=um.unitID";
+            string query = "Select channel_no,display_name,channel_name,um.units as unitsmesure,value,minlevel,maxlevel,onlyminlevel,onlymaxlevel,alarmswitch from channels ch inner join unitsofmesurement um on ch.units=um.unitID";
             MySqlDataAdapter channeladapter = new MySqlDataAdapter(query, Connection);
             DataSet channelsdata = new DataSet();
             channeladapter.Fill(channelsdata, "channels");
@@ -1271,15 +1365,15 @@ namespace DeviceDataDisplay
                         
                         if(Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         { 
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["maxlevel"]));
                         }
                         else if(Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["maxlevel"]));
                         }
                         else if(Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString() ,fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString() ,fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["maxlevel"]));
                         }
                     }
                     if (noOfChannels ==2)
@@ -1291,19 +1385,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
 
@@ -1318,19 +1412,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
                     }
@@ -1343,19 +1437,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
 
@@ -1370,19 +1464,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
                     }
@@ -1395,19 +1489,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                     }
 
@@ -1421,19 +1515,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
                     }
@@ -1447,19 +1541,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
 
@@ -1475,19 +1569,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
 
@@ -1503,19 +1597,19 @@ namespace DeviceDataDisplay
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel);
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
                         }
 
 
@@ -1572,7 +1666,7 @@ namespace DeviceDataDisplay
             setlevels.ShowDialog();
         }
 
-        private Panel screenbuilder(Panel p, string valuewithunits, string channelname, string minlevel, string maxlevel, Font valuefont, Font minmaxchannel, Font channel21above =null)
+        private Panel screenbuilder(Panel p, string valuewithunits, string channelname, string minlevel, string maxlevel, Font valuefont, Font minmaxchannel, Font channel21above =null,bool alarmsetting=false)
         {
 
             Label lbl = new Label();
@@ -1685,7 +1779,51 @@ namespace DeviceDataDisplay
                 p.Controls.Add(lblmax);
 
             }
+            // adding alarm led
+            if(alarmsetting == true)
+            {
+                Label lblalarmled = new Label();
+                lblalarmled.Name = "lblalarm" + p.Name;
+                int lblalarmHW = Convert.ToInt32(p.Height * 0.1);
+                lblalarmled.Height = lblalarmHW;
+                lblalarmled.Width = lblalarmHW;
+                lblalarmled.BackColor = Color.Red;
 
+                int lblalarmledxpos = Convert.ToInt32(p.Width * 0.85);
+                int lblalarmledypos = Convert.ToInt32(p.Height * 0.85);
+                Point lblalarmledpt = new Point(lblalarmledxpos, lblalarmledypos);
+                lblalarmled.Location = lblalarmledpt;
+
+                var path = new System.Drawing.Drawing2D.GraphicsPath();
+                path.AddEllipse(0, 0, lblalarmled.Width, lblalarmled.Height);
+
+                lblalarmled.Region = new Region(path);
+
+                p.Controls.Add(lblalarmled);
+
+                Label lblalarmmode = new Label();
+                lblalarmmode.Name = "lblalarmmode" + p.Name;
+                lblalarmmode.Font = fontChannelminmax;
+                lblalarmmode.AutoSize = true;
+                lblalarmmode.Text = "Alarm Mode";
+                lblalarmmode.ForeColor = Color.White;
+
+                SizeF extentalarmlevel = g.MeasureString(lblalarmmode.Text, lblalarmmode.Font);
+
+                lblalarmmode.Height = Convert.ToInt32(extentalarmlevel.Height);
+                lblalarmmode.Width = Convert.ToInt32(extentalarmlevel.Width);
+
+                int lblalarmmodexpos = Convert.ToInt32(p.Width * 0.09);
+                int lblalarmmodeypos = Convert.ToInt32(p.Height * 0.85);
+
+                Point lblalarmmodept = new Point(lblalarmmodexpos, lblalarmmodeypos);
+
+                lblalarmmode.Location = lblalarmmodept;
+
+                
+
+                p.Controls.Add(lblalarmmode);
+            }
 
             return p;
         }
@@ -1706,6 +1844,7 @@ namespace DeviceDataDisplay
                     CurrentNoOfChannelSelected = 1;
                     if (OpenPort()) { 
                         ShowChannels.Enabled = false;
+                        ConnectionStatus = true;
                         CallTimers(CurrentNoOfChannelSelected);
                         btnpoller.Text = "Disconnect";
                     }
@@ -1715,6 +1854,7 @@ namespace DeviceDataDisplay
                     if (OpenPort())
                     {
                         ShowChannels.Enabled = false;
+                        ConnectionStatus = true;
                         CallTimers(CurrentNoOfChannelSelected);
                         btnpoller.Text = "Disconnect";
                     }
@@ -1723,10 +1863,11 @@ namespace DeviceDataDisplay
             }
             else if(btnpoller.Text=="Disconnect")
             {
+                ConnectionStatus = false;
+                StopTimers(CurrentNoOfChannelSelected);
                 ClosePort();
                 ShowChannels.Enabled = true;
                 btnpoller.Text = "Connect";
-                StopTimers(CurrentNoOfChannelSelected);
             }
         }
 
@@ -5179,7 +5320,13 @@ namespace DeviceDataDisplay
         private void ClosePort()
         {
             mb.Close();
-            lblStatus.Text =  "Staus : " + mb.modbusStatus;
+            lblStatus.Text =  "Polling stopped";
+        }
+
+        private void deviceSettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DeviceDiaplay devicedisplay = new DeviceDiaplay();
+            devicedisplay.ShowDialog();
         }
     }
 }

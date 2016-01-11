@@ -38,6 +38,7 @@
             this.lblSelectChannel = new System.Windows.Forms.Label();
             this.poller = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
+            this.deviceSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainmenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -61,7 +62,8 @@
             this.setUnitsToolStripMenuItem,
             this.setLevelToolStripMenuItem,
             this.addUnitsToolStripMenuItem,
-            this.pollSettingsToolStripMenuItem});
+            this.pollSettingsToolStripMenuItem,
+            this.deviceSettingsToolStripMenuItem});
             this.mainMenuToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 12F);
             this.mainMenuToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.mainMenuToolStripMenuItem.Name = "mainMenuToolStripMenuItem";
@@ -72,28 +74,28 @@
             // setUnitsToolStripMenuItem
             // 
             this.setUnitsToolStripMenuItem.Name = "setUnitsToolStripMenuItem";
-            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
             this.setUnitsToolStripMenuItem.Text = "Set Units";
             this.setUnitsToolStripMenuItem.Click += new System.EventHandler(this.setUnitsToolStripMenuItem_Click);
             // 
             // setLevelToolStripMenuItem
             // 
             this.setLevelToolStripMenuItem.Name = "setLevelToolStripMenuItem";
-            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
             this.setLevelToolStripMenuItem.Text = "Set Level";
             this.setLevelToolStripMenuItem.Click += new System.EventHandler(this.setLevelToolStripMenuItem_Click);
             // 
             // addUnitsToolStripMenuItem
             // 
             this.addUnitsToolStripMenuItem.Name = "addUnitsToolStripMenuItem";
-            this.addUnitsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.addUnitsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
             this.addUnitsToolStripMenuItem.Text = "Add Units";
             this.addUnitsToolStripMenuItem.Click += new System.EventHandler(this.addUnitsToolStripMenuItem_Click);
             // 
             // pollSettingsToolStripMenuItem
             // 
             this.pollSettingsToolStripMenuItem.Name = "pollSettingsToolStripMenuItem";
-            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(198, 32);
+            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
             this.pollSettingsToolStripMenuItem.Text = "Poll Settings";
             this.pollSettingsToolStripMenuItem.Click += new System.EventHandler(this.pollSettingsToolStripMenuItem_Click);
             // 
@@ -141,6 +143,13 @@
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblStatus.Click += new System.EventHandler(this.label1_Click);
             // 
+            // deviceSettingsToolStripMenuItem
+            // 
+            this.deviceSettingsToolStripMenuItem.Name = "deviceSettingsToolStripMenuItem";
+            this.deviceSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
+            this.deviceSettingsToolStripMenuItem.Text = "Device Settings";
+            this.deviceSettingsToolStripMenuItem.Click += new System.EventHandler(this.deviceSettingsToolStripMenuItem_Click);
+            // 
             // DeviceDataDisplay
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 18F);
@@ -178,6 +187,7 @@
         private System.Windows.Forms.Button poller;
         private System.Windows.Forms.ToolStripMenuItem pollSettingsToolStripMenuItem;
         private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.ToolStripMenuItem deviceSettingsToolStripMenuItem;
     }
 }
 

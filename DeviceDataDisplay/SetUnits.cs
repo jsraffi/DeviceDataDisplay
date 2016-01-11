@@ -95,6 +95,7 @@ namespace DeviceDataDisplay
             ChannelsGV.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
 
             }
+            ChannelsGV.AllowUserToAddRows = false;
         }
 
         /// <summary>
