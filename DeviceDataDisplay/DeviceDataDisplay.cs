@@ -5325,7 +5325,7 @@ namespace DeviceDataDisplay
 
         private void deviceSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            DeviceDiaplay devicedisplay = new DeviceDiaplay();
+            DeviceDisplay devicedisplay = new DeviceDisplay();
             devicedisplay.ShowDialog();
         }
     }
