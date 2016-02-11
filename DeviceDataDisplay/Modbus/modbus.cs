@@ -7,7 +7,7 @@ namespace DeviceDataDisplay.Modbus
 {
     public class modbus
     {
-        private SerialPort sp = new SerialPort();
+        public SerialPort sp = new SerialPort();
         public string modbusStatus;
 
         #region Constructor / Deconstructor
@@ -20,62 +20,62 @@ namespace DeviceDataDisplay.Modbus
         #endregion
 
         #region Open / Close Procedures
-        public bool Open(string portName, int baudRate, int databits, Parity parity, StopBits stopBits)
-        {
-            //Ensure port isn't already opened:
-            if (!sp.IsOpen)
-            {
-                //Assign desired settings to the serial port:
-                sp.PortName = portName;
-                sp.BaudRate = baudRate;
-                sp.DataBits = databits;
-                sp.Parity = parity;
-                sp.StopBits = stopBits;
-                //These timeouts are default and cannot be editted through the class at this point:
-                sp.ReadTimeout = 1000;
-                sp.WriteTimeout = 1000;
+        //public bool Open(string portName, int baudRate, int databits, Parity parity, StopBits stopBits)
+        //{
+        //    //Ensure port isn't already opened:
+        //    if (!sp.IsOpen)
+        //    {
+        //        //Assign desired settings to the serial port:
+        //        sp.PortName = portName;
+        //        sp.BaudRate = baudRate;
+        //        sp.DataBits = databits;
+        //        sp.Parity = parity;
+        //        sp.StopBits = stopBits;
+        //        //These timeouts are default and cannot be editted through the class at this point:
+        //        sp.ReadTimeout = 1000;
+        //        sp.WriteTimeout = 1000;
 
-                try
-                {
-                    sp.Open();
-                }
-                catch (Exception err)
-                {
-                    modbusStatus = "Error opening " + portName + ": " + err.Message;
-                    return false;
-                }
-                modbusStatus = "Connected thru " + portName + " Polling started";
-                return true;
-            }
-            else
-            {
-                modbusStatus = portName + " already opened";
-                return false;
-            }
-        }
-        public bool Close()
-        {
-            //Ensure port is opened before attempting to close:
-            if (sp.IsOpen)
-            {
-                try
-                {
-                    sp.Close();
-                }
-                catch (Exception err)
-                {
-                    modbusStatus = "Error closing " + sp.PortName + ": " + err.Message;
-                    return false;
-                }
-                modbusStatus = sp.PortName + " closed successfully";
-                return true;
-            }
-            else
-            {
-                modbusStatus = sp.PortName + " is not open";
-                return false;
-            }
-        }
+        //        try
+        //        {
+        //            sp.Open();
+        //        }
+        //        catch (Exception err)
+        //        {
+        //            modbusStatus = "Error opening " + portName + ": " + err.Message;
+        //            return false;
+        //        }
+        //        modbusStatus = "Connected thru " + portName + " Polling started";
+        //        return true;
+        //    }
+        //    else
+        //    {
+        //        modbusStatus = portName + " already opened";
+        //        return false;
+        //    }
+        //}
+        //public bool Close()
+        //{
+        //    //Ensure port is opened before attempting to close:
+        //    if (sp.IsOpen)
+        //    {
+        //        try
+        //        {
+        //            sp.Close();
+        //        }
+        //        catch (Exception err)
+        //        {
+        //            modbusStatus = "Error closing " + sp.PortName + ": " + err.Message;
+        //            return false;
+        //        }
+        //        modbusStatus = sp.PortName + " closed successfully";
+        //        return true;
+        //    }
+        //    else
+        //    {
+        //        modbusStatus = sp.PortName + " is not open";
+        //        return false;
+        //    }
+        //}
         #endregion
 
         #region CRC Computation

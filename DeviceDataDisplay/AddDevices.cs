@@ -15,6 +15,8 @@ namespace DeviceDataDisplay
     public partial class AddDevices : Form
     {
         private DataGridView adddevicegidview;
+        private bool validateStatus;
+       
         public AddDevices()
         {
             InitializeComponent();
@@ -106,7 +108,7 @@ namespace DeviceDataDisplay
 
                 Dictionary<int, String> modbus_unit_alaram_res_datatypes = new Dictionary<int, string>();
                 modbus_unit_alaram_res_datatypes.Add(1, "uinteger-16 bits");
-                modbus_unit_alaram_res_datatypes.Add(2, "ulong-32 bits");
+                //modbus_unit_alaram_res_datatypes.Add(2, "ulong-32 bits");
                 modbus_unit_alaram_res_datatypes.Add(50000, "");
 
                 DataGridViewComboBoxCell unitdatatypes = new DataGridViewComboBoxCell();
@@ -182,7 +184,11 @@ namespace DeviceDataDisplay
         private bool SavetoDB()
         {   
             try
-            { 
+            {   
+                if(!(validate_form()) )
+                {
+                    return false;
+                }
                 using (MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
                 {
                     string unitaddress = (txtUnitAddress.Text != "") ? txtUnitAddress.Text : "null";
@@ -207,36 +213,175 @@ namespace DeviceDataDisplay
                     MySqlCommand cmdadddevice = new MySqlCommand();
                     cmdadddevice.CommandType = CommandType.Text;
                     cmdadddevice.CommandText = SQL;
-                    
-
                     cmdadddevice.Connection = Connection;
-
                     Connection.Open();
                     cmdadddevice.ExecuteNonQuery();
-
-
                     return true;
-
                 }
             }
-            catch(Exception e)
+            catch(Exception err)
             {
-                lblStatus.Text = "Unable to add device";
+                lblStatus.Text = "Unable to add device" + err.Message;
                 return false;
             }
 
         }
-
-        private void groupBox1_Enter(object sender, EventArgs e)
+        private Boolean validate_form()
         {
+            int outvalue = 0;
+            if(txtDeviceName.Text == "")
+            {
+                txtDeviceName.Focus();
+                lblStatus.Text = "Device name is required";
+                validateStatus = false;
+                return false;
+            }
 
+            if (!(int.TryParse(txtSlaveID.Text, out outvalue)))
+            {
+                txtSlaveID.Focus();
+                lblStatus.Text = "slave id required and should be numeric";
+                validateStatus = false;
+                return false;
+            }
+            else if (outvalue <= 0 || outvalue > 247)
+            {
+                txtSlaveID.Focus();
+                lblStatus.Text = "Please enter a value between 0 and 247";
+                validateStatus = false;
+                return false;
+            }
+            if (!(int.TryParse(txtValueAddress.Text, out outvalue)))
+            {
+                txtValueAddress.Focus();
+                lblStatus.Text = "value address id required and should be numeric";
+                validateStatus = false;
+                return false;
+            }
+            else if (outvalue < 0 || outvalue > 9999)
+            {
+                txtValueAddress.Focus();
+                lblStatus.Text = "value address is between 0 and 9999";
+                validateStatus = false;
+                return false;
+
+            }
+            if((txtUnitAddress.Text =="") ^ (cmbUnitDatatype.Text == ""))
+            {
+                txtUnitAddress.Focus();
+                lblStatus.Text = "Both unit address & unit datatype is required else both are not required";
+                validateStatus = false;
+                return false;
+            }
+            else if(txtUnitAddress.Text != "")
+            {
+                if(!(int.TryParse(txtUnitAddress.Text, out outvalue)))
+                {
+                    txtUnitAddress.Focus();
+                    lblStatus.Text = "Unit address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtUnitAddress.Focus();
+                    lblStatus.Text = "Unit address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
+            }
+
+            if ((txtResolutionAddress.Text == "") ^ (cmbResolutionDatatype.Text == ""))
+            {
+                txtResolutionAddress.Focus();
+                lblStatus.Text = "Both resolution address & resolution datatype is required else both are not required";
+                validateStatus = false;
+                return false;
+            }
+            else if (txtResolutionAddress.Text != "")
+            {
+                if (!(int.TryParse(txtResolutionAddress.Text, out outvalue)))
+                {
+                    txtResolutionAddress.Focus();
+                    lblStatus.Text = "Resolution address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtResolutionAddress.Focus();
+                    lblStatus.Text = "Resolution address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
+            }
+
+            if ((txtAlarmAddress.Text == "") ^ (cmbAlarmDatatype.Text == ""))
+            {
+                txtAlarmAddress.Focus();
+                lblStatus.Text = "Both alarm address & alarm datatype is required else both are not required";
+                validateStatus = false;
+                return false;
+            }
+            else if (txtAlarmAddress.Text != "")
+            {
+                if (!(int.TryParse(txtAlarmAddress.Text, out outvalue)))
+                {
+                    txtAlarmAddress.Focus();
+                    lblStatus.Text = "Alarm address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtAlarmAddress.Focus();
+                    lblStatus.Text = "Alarm address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
+            }
+
+            List<string> address = new List<string>();
+            address.Add(txtValueAddress.Text);
+               
+            if(txtUnitAddress.Text != null)
+            {
+                address.Add(txtUnitAddress.Text);
+                    
+            }
+
+            if (txtResolutionAddress.Text != null)
+            {
+                address.Add(txtResolutionAddress.Text);
+                    
+            }
+
+            if (txtAlarmAddress.Text != null)
+            {
+                address.Add(txtAlarmAddress.Text);
+                    
+            }
+            
+            if(address.Count() > 0)
+            {
+                var distinct = address.Distinct().Count();
+                if(distinct != address.Count())
+                {
+                    lblStatus.Text = "All address or not unique";
+                    validateStatus = false;
+                    return false;
+                }
+
+            }           
+            return true;
+          
         }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void AddDevices_Load(object sender, EventArgs e)
         {
             List<Datatypes> vdatatypes = new List<Datatypes>()
@@ -247,19 +392,19 @@ namespace DeviceDataDisplay
             List<Datatypes> Unitdatatypes = new List<Datatypes>()
             {
                 new Datatypes { valueIndex=1, valueDatatype ="UInteger 16bit" },
-                new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
+                //new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
                 new Datatypes { valueIndex=100, valueDatatype ="" }
             };
             List<Datatypes> alarmdatatypes = new List<Datatypes>()
             {
                 new Datatypes { valueIndex=1, valueDatatype ="UInteger 16bit" },
-                new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
+                //new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
                 new Datatypes { valueIndex=100, valueDatatype ="" }
             };
             List<Datatypes> Resdatatypes = new List<Datatypes>()
             {
                 new Datatypes { valueIndex=1, valueDatatype ="UInteger 16bit" },
-                new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
+                //new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
                 new Datatypes { valueIndex=100, valueDatatype ="" }
             };
             List<Datatypes> Endianessvalues = new List<Datatypes>()
@@ -297,30 +442,13 @@ namespace DeviceDataDisplay
             cmbAlarmDatatype.DisplayMember = "valueDatatype";
             cmbAlarmDatatype.SelectedIndex = cmbAlarmDatatype.FindStringExact("");
             cmbAlarmDatatype.DropDownStyle = ComboBoxStyle.DropDownList;
-
-           
         }
-
-        private void groupBox2_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label3_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private class Datatypes
         {
             public int valueIndex { get; set; }
 
             public string valueDatatype { get; set; }
         }
+
     } 
 }

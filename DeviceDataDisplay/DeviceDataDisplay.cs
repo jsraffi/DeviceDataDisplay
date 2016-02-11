@@ -21,6 +21,7 @@ namespace DeviceDataDisplay
         modbus mb = new modbus();
 
         SerialPort sp = new SerialPort();
+        string modbusStatus;
 
         System.Threading.Timer tmrChannel1;
         System.Threading.Timer tmrChannel2;
@@ -94,15 +95,23 @@ namespace DeviceDataDisplay
         List<ushort> devicevalues1 = new List<ushort>();
         Dictionary<ushort, int> deviceresolution1 = new Dictionary<ushort, int>();
         Dictionary<ushort, string> deviceunits1 = new Dictionary<ushort, string>();
+        Dictionary<ushort, string> devicealarm1 = new Dictionary<ushort, string>();
+
         string lastdisplayedvalue;
+        string lastdisplayedvalue1;
+        string lastdisplayedvalue2;
+
         bool firstcalltochannel1 = true;
+        bool firstcalltochannel2 = true;
+
+        ModbusReader channel1reader;
+        ModbusReader channel2reader;
 
         int CurrentNoOfChannelSelected = 0;
+        
         public DeviceDataDisplay()
         {
             InitializeComponent();
-
-            
         }
 
         private void DeviceDataDisplay_Load(object sender, EventArgs e)
@@ -115,8 +124,117 @@ namespace DeviceDataDisplay
 
             ChannelSetting();
         }
-
         private void ChannelTimer1(object state)
+        {   
+            if(CurrentNoOfChannelSelected ==1)
+            {         
+                Channel1Timer();
+            }
+            if(CurrentNoOfChannelSelected ==2)
+            {
+                Channel1Timer();
+                Channel2Timer();
+            }
+
+            
+            if (ConnectionStatus == false)
+            {
+                if (CurrentNoOfChannelSelected == 1)
+                {
+                    firstcalltochannel1 = true;
+
+                    //this.Invoke((MethodInvoker)delegate
+                    //{
+                    //    var p = Controls.Find("Channel1", false);
+                    //    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = lastdisplayedvalue1;
+                        
+                    //});
+                    ClosePort();
+                }
+                else if (CurrentNoOfChannelSelected == 2)
+                {
+                    firstcalltochannel1 = true;
+                    firstcalltochannel2 = true;
+                    //this.Invoke((MethodInvoker)delegate
+                    //{
+                    //    var p1 = Controls.Find("Channel1", false);
+                    //    p1[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = lastdisplayedvalue1;
+
+                    //    var p2 = Controls.Find("Channel2", false);
+                    //    p2[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").Text = lastdisplayedvalue2;
+
+                    //});
+                    ClosePort();
+                }
+                //tmrChannel1.Change(Timeout.Infinite, Timeout.Infinite);
+                tmrChannel1.Dispose();
+            }
+
+            }
+        private void Channel1Timer()
+        {
+            try
+            {  
+                if (firstcalltochannel1)
+                {
+                    channel1reader= new ModbusReader(1,sp);
+                    if (channel1reader.IntializeDB())
+                    {
+                        firstcalltochannel1 = false;
+                    }
+                    else
+                    {   
+                        throw new ApplicationException();
+                    }
+                }
+                channel1reader.ReadDevice();
+                lastdisplayedvalue1 = channel1reader.value_resolution_units;
+
+                this.Invoke((MethodInvoker)delegate
+                {
+                    var p = Controls.Find("Channel1", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = channel1reader.value_resolution_units;
+                if (channel1reader.AlarmOn == true)
+                    {
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmmodeChannel1").Text = channel1reader.AlarmMode;
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmledChannel1").BackColor = (channel1reader.AlarmMode == "OFF") ? Color.Red : Color.Green;
+
+                    }
+                });
+
+            }
+            catch (Exception err)
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    if (channel1reader.ModbusError!=null)
+                    {
+                        var p = Controls.Find("Channel1", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = "MB error";
+                        
+                    }
+                    else if(channel1reader.DBError != null)
+                    {
+                        var p = Controls.Find("Channel1", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = channel1reader.DBError;
+                        
+                    }
+                    else
+                    {
+                        var p = Controls.Find("Channel1", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = "Undefined error";
+                        lblStatus.Text = err.Message;
+                    }
+
+                });
+                
+            }
+   
+       }
+
+           
+        
+        private void ChannelTimer10900(object state)
         {
             try
             {
@@ -136,6 +254,10 @@ namespace DeviceDataDisplay
                     if (deviceunits1.Count > 0)
                     {
                         deviceunits1.Clear();
+                    }
+                    if (devicealarm1.Count > 0)
+                    {
+                        devicealarm1.Clear();
                     }
 
                     MySqlConnection Connection1 = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]);
@@ -165,13 +287,13 @@ namespace DeviceDataDisplay
                             devicevalues1.Add(devicereader.GetUInt16(3));//value_start_address 2
                             devicevalues1.Add(devicereader.GetUInt16(4));//value_return_datatype 3
 
-                           /* 4 unit_start_address*/ devicevalues1.Add((!(devicereader.IsDBNull(5)) ? devicereader.GetUInt16(5):Convert.ToUInt16(60000)));
-                           /* 5unit_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(6)) ? devicereader.GetUInt16(6) : Convert.ToUInt16(60000)));
-                           /* 6alarm_start_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(7)) ? devicereader.GetUInt16(7) : Convert.ToUInt16(60000))); 
-                           /* 7alarm_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(8)) ? devicereader.GetUInt16(8) : Convert.ToUInt16(60000))); 
-                            /* 8resolution_start_address */devicevalues1.Add((!(devicereader.IsDBNull(9)) ? devicereader.GetUInt16(9) : Convert.ToUInt16(60000)));
-                           /* 9resolution_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(10)) ? devicereader.GetUInt16(10) : Convert.ToUInt16(60000)));
-                           /* 10Endianess */devicevalues1.Add((!(devicereader.IsDBNull(11)) ? devicereader.GetUInt16(11) : Convert.ToUInt16(60000)));
+/* 4 unit_start_address*/ devicevalues1.Add((!(devicereader.IsDBNull(5)) ? devicereader.GetUInt16(5):Convert.ToUInt16(60000)));
+/* 5unit_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(6)) ? devicereader.GetUInt16(6) : Convert.ToUInt16(60000)));
+/* 6alarm_start_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(7)) ? devicereader.GetUInt16(7) : Convert.ToUInt16(60000))); 
+/* 7alarm_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(8)) ? devicereader.GetUInt16(8) : Convert.ToUInt16(60000))); 
+/* 8resolution_start_address */devicevalues1.Add((!(devicereader.IsDBNull(9)) ? devicereader.GetUInt16(9) : Convert.ToUInt16(60000)));
+/* 9resolution_return_datatype */ devicevalues1.Add((!(devicereader.IsDBNull(10)) ? devicereader.GetUInt16(10) : Convert.ToUInt16(60000)));
+/* 10Endianess */devicevalues1.Add((!(devicereader.IsDBNull(11)) ? devicereader.GetUInt16(11) : Convert.ToUInt16(60000)));
                         }
                     }
 
@@ -197,9 +319,26 @@ namespace DeviceDataDisplay
                         }
                         unitReader.Close();
                     }
-                    
+                    //get alarm defination from db and load it in to dictionary
+                    if (devicevalues1[6] != 60000)
+                    {
+                        var queryres = "Select alarm_index,alarm_value from device_alarm where deviceID=" + deviceID + " order by alarm_index ";
+                        getdevice.CommandText = queryres;
+                        getdevice.Connection = Connection1;
+                        MySqlDataReader alarmReader = getdevice.ExecuteReader();
+
+                        if (alarmReader.HasRows)
+                        {
+                            while (alarmReader.Read())
+                            {
+                                devicealarm1.Add(alarmReader.GetUInt16(0), alarmReader.GetString(1));
+                            }
+                        }
+                        alarmReader.Close();
+                    }
+
                     // same as units if resolution is defined than add those values to dictionary
-                    if(devicevalues1[8] != 60000)
+                    if (devicevalues1[8] != 60000)
                     { 
                         var queryres = "Select resolution_index,resolution_value from device_resolution where deviceID="+ deviceID + " order by resolution_index ";
                         getdevice.CommandText = queryres;
@@ -218,9 +357,30 @@ namespace DeviceDataDisplay
                     // get database values for just once store it in list and dictionary's and set the flag to false
                     firstcalltochannel1 = false;
                 }
-               
+                string alarmmode = "";
                 // try catch inside try catch just to get modbus errors
                 try {
+                    //checking and setting alarammode
+                    
+                    if (devicevalues1[6] != 60000)
+                    {
+                        ushort[] alarm_value = new ushort[devicevalues1[7]];
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[6], devicevalues1[7], ref alarm_value);
+                        //loop thru the reoslution dictionary
+                        foreach (var alarm in devicealarm1)
+                        {
+                            // if the key matchess the meter returned value
+                            if (alarm.Key == alarm_value[0])
+                            {
+                                alarmmode = alarm.Value.ToString();// get the value for the matched key
+        
+                            }
+                        }
+                        Thread.Sleep(50);
+
+                    }
+
+
 
                     //reteriving units values
                     //poll modbus if units are confgured by the user
@@ -228,7 +388,7 @@ namespace DeviceDataDisplay
                     //array postion 4 denotes unit value address
                     if (devicevalues1[4] != 60000)
                     {   
-                        //address 5 denotes the return address type of units, 16bit(integer in C short in C#)or long.
+                        //address 5 denotes the return address type of units, 16bit(integer in C, short in C#)or long.
                         // In this case it is integer (short), length of addresses to be read is one for integer
                         //and 2 for long or int32 in C#
                         ushort[] unit_value = new ushort[devicevalues1[5]];
@@ -287,7 +447,7 @@ namespace DeviceDataDisplay
                     //get resolution
                     double dval = (double)intValue;
                     string itemString = "";
-                    // same like units only address begin and end value changes/see while loop to know address
+                    // same like units only address begin and end value changes/see while loop(up) to know address
                     if (devicevalues1[8] != 60000)
                     {
                         ushort[] resolution_value = new ushort[devicevalues1[9]];
@@ -331,6 +491,12 @@ namespace DeviceDataDisplay
                     {
                         var p = Controls.Find("Channel1", false);
                         p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = itemString;
+                        if(alarmmode!="")
+                        {
+                            p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmmodeChannel1").Text = alarmmode;
+                            p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmledChannel1").BackColor = (alarmmode == "OFF") ? Color.Red : Color.Green;
+
+                        }
                     });
                     
                 }
@@ -349,6 +515,12 @@ namespace DeviceDataDisplay
                         {
                             var p = Controls.Find("Channel1", false);
                             p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel1").Text = lastdisplayedvalue;
+
+                            if (alarmmode != "")
+                            {
+                                p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmmodeChannel1").Text = "AlarmMode";
+                                p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmledChannel1").BackColor = Color.White;
+                            }
 
                             lblStatus.Text = "Timer polling stopped ";
                         });
@@ -370,31 +542,78 @@ namespace DeviceDataDisplay
             }
         }
         
+        private void Channel2Timer()
+        {
+            try
+            {
+                if (firstcalltochannel2)
+                {
+                    channel2reader = new ModbusReader(2, sp);
+                    if (channel2reader.IntializeDB())
+                    {
+                        firstcalltochannel2 = false;
+                    }
+                    else
+                    {   
+                        throw new ApplicationException();
+                    }
+                }
+                channel2reader.ReadDevice();
+                lastdisplayedvalue2 = channel2reader.value_resolution_units;
+
+                this.Invoke((MethodInvoker)delegate
+                {
+                    var p = Controls.Find("Channel2", false);
+                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").Text = channel2reader.value_resolution_units;
+                    if (channel2reader.AlarmOn == true)
+                    {
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmmodeChannel2").Text = channel2reader.AlarmMode;
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblalarmledChannel2").BackColor = (channel2reader.AlarmMode == "OFF") ? Color.Red : Color.Green;
+
+                    }
+                });
+
+            }
+            catch (Exception err)
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+
+                    if (channel2reader.ModbusError != null)
+                    {
+                        var p = Controls.Find("Channel2", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").Text = "MB error";
+
+                    }
+                    else if (channel2reader.DBError != null)
+                    {
+                        var p = Controls.Find("Channel2", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").Text = channel2reader.DBError;
+
+                    }
+                    else
+                    {
+                        var p = Controls.Find("Channel2", false);
+                        p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").Text = "Undefined error";
+                        //lblStatus.Text = err.Message;
+
+                    }
+
+                });
+                
+            }
+            
+
+            //if (firstcalltochannel2 == false && ConnectionStatus == true)
+            //{
+            //    tmrChannel2.Change(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(-1));
+            //}
+        }
+
         private void ChannelTimer2(object state)
         {
-
-            if (flag2 == true)
-            {
-                this.Invoke((MethodInvoker)delegate
-                {
-                    var p = Controls.Find("Channel2", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").ForeColor = Color.Red;
-                });
-                flag2 = false;
-            }
-            else
-            {
-
-                this.Invoke((MethodInvoker)delegate
-                {
-                    var p = Controls.Find("Channel2", false);
-                    p[0].Controls.OfType<Label>().Single(l => l.Name == "lblvalueChannel2").ForeColor = Color.Green;
-                });
-
-                flag2 = true;
-            }
-            tmrChannel2.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(-1));
         }
+
 
         private void ChannelTimer3(object state)
         {
@@ -1361,19 +1580,20 @@ namespace DeviceDataDisplay
                         DataRow drow = getchannel(tblChannel, channelid);
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1restfontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
                         
                         if(Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         { 
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["maxlevel"]));
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if(Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["maxlevel"]));
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                         else if(Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
                         {
-                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString() ,fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["maxlevel"]));
+                            p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString() ,fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
                         }
                     }
                     if (noOfChannels ==2)
@@ -1381,7 +1601,8 @@ namespace DeviceDataDisplay
                         DataRow drow = getchannel(tblChannel, channelid);
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2restfontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1407,7 +1628,8 @@ namespace DeviceDataDisplay
                         DataRow drow = getchannel(tblChannel, channelid);
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch34valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch34restfontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
                         
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
@@ -1433,7 +1655,8 @@ namespace DeviceDataDisplay
                         DataRow drow = getchannel(tblChannel, channelid);
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch58valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch58restfontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1460,7 +1683,8 @@ namespace DeviceDataDisplay
                         DataRow drow = getchannel(tblChannel, channelid);
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch912valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch912restfontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1485,7 +1709,8 @@ namespace DeviceDataDisplay
                         DataRow drow = getchannel(tblChannel, channelid);
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1316valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1316restfontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1511,7 +1736,8 @@ namespace DeviceDataDisplay
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1720valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1720restfontsize"]), FontStyle.Bold);
                         Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chname1720fontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1537,7 +1763,8 @@ namespace DeviceDataDisplay
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2124valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2124restfontsize"]), FontStyle.Bold);
                         Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1565,7 +1792,8 @@ namespace DeviceDataDisplay
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2528valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2528restfontsize"]), FontStyle.Bold);
                         Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1593,7 +1821,8 @@ namespace DeviceDataDisplay
                         Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2932valuefontsize"]), FontStyle.Bold);
                         Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2932restfontsize"]), FontStyle.Bold);
                         Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
-                        var value = drow["value"].ToString() + "  " + drow["unitsmesure"].ToString();
+                        double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = onlyvalue.ToString() + "  " + drow["unitsmesure"].ToString();
 
                         if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
                         {
@@ -1674,15 +1903,18 @@ namespace DeviceDataDisplay
             Font fontChannel1 = valuefont;
             Font fontChannelminmax = minmaxchannel;
             lbl.Name = "lblvalue" + p.Name;
+            
             lbl.Font = fontChannel1;
-            lbl.AutoSize = true;
+            lbl.AutoSize = false;
+            lbl.TextAlign = ContentAlignment.MiddleCenter;
             lbl.Text = valuewithunits;
             Graphics g = CreateGraphics();
             SizeF extent = g.MeasureString(lbl.Text, lbl.Font);
 
             lbl.Height = Convert.ToInt32(extent.Height);
             lbl.Width = Convert.ToInt32(extent.Width);
-            var x = (p.Width / 2) - (lbl.Width / 2);
+            
+            var x = (p.Width - lbl.Width )/2;
             Point pointvalue = new Point(x, ((p.Height / 2) - (lbl.Height / 2)));
 
             lbl.Location = pointvalue;
@@ -1692,7 +1924,6 @@ namespace DeviceDataDisplay
             p.Controls.Add(lbl);
 
             //Adding channel to panel
-            
 
             Label lblchannelname = new Label();
             if(channel21above == null)
@@ -1783,11 +2014,11 @@ namespace DeviceDataDisplay
             if(alarmsetting == true)
             {
                 Label lblalarmled = new Label();
-                lblalarmled.Name = "lblalarm" + p.Name;
+                lblalarmled.Name = "lblalarmled" + p.Name;
                 int lblalarmHW = Convert.ToInt32(p.Height * 0.1);
                 lblalarmled.Height = lblalarmHW;
                 lblalarmled.Width = lblalarmHW;
-                lblalarmled.BackColor = Color.Red;
+                lblalarmled.BackColor = Color.White;
 
                 int lblalarmledxpos = Convert.ToInt32(p.Width * 0.85);
                 int lblalarmledypos = Convert.ToInt32(p.Height * 0.85);
@@ -1839,34 +2070,33 @@ namespace DeviceDataDisplay
             Button btnpoller = (Button)sender;
             if(btnpoller.Text == "Connect")
             {
-                if (ShowChannels.SelectedItem == null)
+                if (ShowChannels.SelectedItem != null)
                 {
-                    CurrentNoOfChannelSelected = 1;
                     if (OpenPort()) { 
                         ShowChannels.Enabled = false;
+                        mainMenuToolStripMenuItem.Enabled = false;
                         ConnectionStatus = true;
-                        CallTimers(CurrentNoOfChannelSelected);
+                        //CallTimers(CurrentNoOfChannelSelected);
+                        tmrChannel1 = new System.Threading.Timer(ChannelTimer1, "", Timeout.Infinite, Timeout.Infinite);
+                        tmrChannel1.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(1000));
                         btnpoller.Text = "Disconnect";
                     }
                 }
                 else
                 {
-                    if (OpenPort())
-                    {
-                        ShowChannels.Enabled = false;
-                        ConnectionStatus = true;
-                        CallTimers(CurrentNoOfChannelSelected);
-                        btnpoller.Text = "Disconnect";
-                    }
+                    lblStatus.Text = "Please select a channel";
                 }
 
             }
             else if(btnpoller.Text=="Disconnect")
             {
                 ConnectionStatus = false;
-                StopTimers(CurrentNoOfChannelSelected);
-                ClosePort();
+                //StopTimers(CurrentNoOfChannelSelected);
+                //Thread.Sleep(2000);
+
+                //ClosePort();
                 ShowChannels.Enabled = true;
+                mainMenuToolStripMenuItem.Enabled = true;
                 btnpoller.Text = "Connect";
             }
         }
@@ -5307,26 +5537,90 @@ namespace DeviceDataDisplay
 
         }
         private bool OpenPort()
-        { 
-            if (mb.Open("COM9", 9600, 8, Parity.None, StopBits.One))
+        {
+            if (Open("COM9", 9600, 8, Parity.None, StopBits.One))
             {
-                lblStatus.Text = "Status: " + mb.modbusStatus;
+                lblStatus.Text = "Status: " + modbusStatus;
                 return true;
             }
-            
-            lblStatus.Text ="Status: "+mb.modbusStatus;
+
+            lblStatus.Text = "Status: " + modbusStatus;
             return false;
         }
         private void ClosePort()
         {
-            mb.Close();
-            lblStatus.Text =  "Polling stopped";
+            PortClose();
+            this.Invoke((MethodInvoker)delegate
+            {
+                lblStatus.Text = "Polling stopped";
+            });
         }
+        public bool Open(string portName, int baudRate, int databits, Parity parity, StopBits stopBits)
+        {
+            //Ensure port isn't already opened:
+            if (!sp.IsOpen)
+            {
+                //Assign desired settings to the serial port:
+                sp.PortName = portName;
+                sp.BaudRate = baudRate;
+                sp.DataBits = databits;
+                sp.Parity = parity;
+                sp.StopBits = stopBits;
+                //These timeouts are default and cannot be editted through the class at this point:
+                sp.ReadTimeout = 1000;
+                sp.WriteTimeout = 1000;
 
+                try
+                {
+                    sp.Open();
+                }
+                catch (Exception err)
+                {
+                    modbusStatus = "Error opening " + portName + ": " + err.Message;
+                    return false;
+                }
+                modbusStatus = "Connected thru " + portName + " Polling started";
+                return true;
+            }
+            else
+            {
+                modbusStatus = portName + " already opened";
+                return false;
+            }
+        }
+        public bool PortClose()
+        {
+            //Ensure port is opened before attempting to close:
+            if (sp.IsOpen)
+            {
+                try
+                {
+                    sp.Close();
+                }
+                catch (Exception err)
+                {
+                    modbusStatus = "Error closing " + sp.PortName + ": " + err.Message;
+                    return false;
+                }
+                modbusStatus = sp.PortName + " closed successfully";
+                return true;
+            }
+            else
+            {
+                modbusStatus = sp.PortName + " is not open";
+                return false;
+            }
+        }
         private void deviceSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             DeviceDisplay devicedisplay = new DeviceDisplay();
             devicedisplay.ShowDialog();
+        }
+
+        private void mapDevicesToChannelsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MapDevicesToChannels mapdevices = new MapDevicesToChannels();
+            mapdevices.ShowDialog();
         }
     }
 }
