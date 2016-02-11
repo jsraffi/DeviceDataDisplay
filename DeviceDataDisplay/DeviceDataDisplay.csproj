@@ -80,6 +80,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddDevices.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddDevices.Designer.cs">
+      <DependentUpon>AddDevices.cs</DependentUpon>
+    </Compile>
     <Compile Include="AddUnits.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -92,6 +98,20 @@
     <Compile Include="DeviceDataDisplay.Designer.cs">
       <DependentUpon>DeviceDataDisplay.cs</DependentUpon>
     </Compile>
+    <Compile Include="DeviceDisplay.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DeviceDisplay.Designer.cs">
+      <DependentUpon>DeviceDisplay.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MapDevicesToChannels.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MapDevicesToChannels.Designer.cs">
+      <DependentUpon>MapDevicesToChannels.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Modbus\modbus.cs" />
+    <Compile Include="Modbus\ModbusReader.cs" />
     <Compile Include="Pollsetting.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -113,11 +133,20 @@
       <DependentUpon>SetUnits.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Channel.cs" />
+    <EmbeddedResource Include="AddDevices.resx">
+      <DependentUpon>AddDevices.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="AddUnits.resx">
       <DependentUpon>AddUnits.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DeviceDataDisplay.resx">
       <DependentUpon>DeviceDataDisplay.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DeviceDisplay.resx">
+      <DependentUpon>DeviceDisplay.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MapDevicesToChannels.resx">
+      <DependentUpon>MapDevicesToChannels.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pollsetting.resx">
       <DependentUpon>Pollsetting.cs</DependentUpon>
@@ -167,6 +196,11 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="MySQLBackup\datalogger-11-feb-2016.sql" />
+    <Content Include="MySQLBackup\datalogger06-01-2016.sql" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
