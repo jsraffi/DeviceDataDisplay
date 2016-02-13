@@ -38,11 +38,15 @@ namespace DeviceDataDisplay.Modbus
 
         public int Channelid { get; set; }
 
-        public bool AlarmStatus { get; set; }
+        public bool AlarmStatus { get; set; } 
 
         public string Units { get; set; }
 
         public int Resolution { get; set; }
+
+        public bool DeviceNotFound { get; set; }
+
+        public bool IsIntialzeDB { get; set; } = false;
         
         public bool IntializeDB()
         {
@@ -58,7 +62,9 @@ namespace DeviceDataDisplay.Modbus
 
                 if(deviceID == 0)
                 {
-                    DBError = "Device unattached";
+                    DBError = "No device";
+                    DeviceNotFound = true;
+                    IsIntialzeDB = true;
                     return false;
                 }
 
@@ -95,9 +101,9 @@ namespace DeviceDataDisplay.Modbus
                         devicevalues1.Add((!(devicereader.IsDBNull(10)) ? devicereader.GetUInt16(10) : Convert.ToUInt16(60000)));
                         /* 10Endianess */
                         devicevalues1.Add((!(devicereader.IsDBNull(11)) ? devicereader.GetUInt16(11) : Convert.ToUInt16(60000)));
-                        /* 12 alarm_status_start_address */
+                        /* 11 alarm_status_start_address */
                         devicevalues1.Add((!(devicereader.IsDBNull(12)) ? devicereader.GetUInt16(12) : Convert.ToUInt16(60000)));
-                        /* 13 alarm_status_return_datatype */
+                        /* 12 alarm_status_return_datatype */
                         devicevalues1.Add((!(devicereader.IsDBNull(13)) ? devicereader.GetUInt16(13) : Convert.ToUInt16(60000)));
                     }
                 }
@@ -202,6 +208,7 @@ namespace DeviceDataDisplay.Modbus
                         resolutionReader.Close();
                         */
                 }
+                IsIntialzeDB = true;
                 return true;
 
             }
@@ -257,6 +264,10 @@ namespace DeviceDataDisplay.Modbus
                     Thread.Sleep(50);
                 }
 */
+                //read alarm status
+                
+                
+                
                 //for value reteriving
                 int intValue = 0;
                 //value devicevalue1[3]  denotes meter value return datatype, 
@@ -333,6 +344,17 @@ namespace DeviceDataDisplay.Modbus
                     //    Thread.Sleep(50);
                     //}
                 }
+
+                if (devicevalues1[11] != 60000)
+                {
+                    ushort[] alarm_status = new ushort[devicevalues1[12]];
+
+                    //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
+                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[11], devicevalues1[12], ref alarm_status);
+                    Thread.Sleep(50);
+                    AlarmStatus = (alarm_status[0] == 0) ? false : true;
+
+                }
                 if (resolution_applied == "")
                 {
                     string unints = (Units != "") ? " " + Units : "";
@@ -348,7 +370,7 @@ namespace DeviceDataDisplay.Modbus
             catch (Exception err)
             {
 
-                ModbusError = "Error in modbus read";
+                ModbusError = "MB Error" + err.Message;
                 throw;
             }
             

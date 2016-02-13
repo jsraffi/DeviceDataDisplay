@@ -31,13 +31,16 @@ namespace DeviceDataDisplay
 
         private void Pollsetting_Load(object sender, EventArgs e)
         {
-            string[] channels = new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32" };
+            string[] commandInterval = new string[] { "50","100","150","200","250","300","350","400","450","500" };
+
+            string[] firstTimeinteval = new string[] { "32000", "50000", "64000" };
 
             string[] baudrates = { "230400", "115200", "57600", "38400", "19200", "9600" };
 
             string[] portnames = { "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM10", "COM11", "COM12", "COM13", "COM14", "COM15", "COM16" };
 
-            CmbNoOfChannels.Items.AddRange(channels);
+            cmbCommandInterval.Items.AddRange(commandInterval);
+            cmbFirstTimePollInterval.Items.AddRange(firstTimeinteval);
             CmbBaudRates.Items.AddRange(baudrates);
             CmbPortNames.Items.AddRange(portnames);
 
@@ -52,33 +55,18 @@ namespace DeviceDataDisplay
 
             CmbPortNames.SelectedIndex = CmbPortNames.FindStringExact(tblpoll_setting.Rows[0].Field<string>("com_port"));
             CmbBaudRates.SelectedIndex = CmbBaudRates.FindStringExact(tblpoll_setting.Rows[0].Field<int>("baud_rate").ToString());
-            CmbNoOfChannels.SelectedIndex = CmbNoOfChannels.FindStringExact(tblpoll_setting.Rows[0].Field<int>("no_channels").ToString());
-            txtPollInterval.Text = tblpoll_setting.Rows[0].Field<int>("poll_interval").ToString();
+            cmbCommandInterval.SelectedIndex = cmbCommandInterval.FindStringExact(tblpoll_setting.Rows[0].Field<int>("command_interval").ToString());
+            cmbFirstTimePollInterval.SelectedIndex = cmbFirstTimePollInterval.FindStringExact(tblpoll_setting.Rows[0].Field<int>("poll_interval").ToString());
         }
 
-        private void txtPollInterval_Validated(object sender, EventArgs e)
-        {
-            TextBox txtpollinterval = (TextBox)sender;
-
-            int outvalue = 0;
-            if(!(int.TryParse(txtpollinterval.Text, out outvalue))&& txtpollinterval.Text!=null)
-            {
-                txtpollinterval.Text = "Only Numbers";
-                txtpollinterval.Focus();
-                txtpollinterval.ForeColor = Color.Red;
-            }
-            else
-            {
-                txtpollinterval.ForeColor = Color.Black;
-            }
-        }
+        
 
         private void btnSave_Click(object sender, EventArgs e)
         {
             using (MySqlConnection conn = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
             {
                 MySqlCommand cmdminmaxUpdate = new MySqlCommand();
-                cmdminmaxUpdate.CommandText = "Update poll_setting  set com_port ='" + (CmbPortNames.SelectedItem as Object).ToString()  + "' , baud_rate =" + (CmbBaudRates.SelectedItem as Object).ToString() + ", no_channels = " + (CmbNoOfChannels.SelectedItem as Object).ToString() + ", poll_interval = " + txtPollInterval.Text + " where pollID=1";
+                cmdminmaxUpdate.CommandText = "Update poll_setting  set com_port ='" + (CmbPortNames.SelectedItem as Object).ToString()  + "' , baud_rate =" + (CmbBaudRates.SelectedItem as Object).ToString() + ", command_interval = " + (cmbCommandInterval.SelectedItem as Object).ToString() + ", poll_interval = " + (cmbFirstTimePollInterval.SelectedItem as Object).ToString() + " where pollID=1";
                 
 
                 cmdminmaxUpdate.CommandType = CommandType.Text;
