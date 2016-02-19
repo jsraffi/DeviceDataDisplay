@@ -1072,5 +1072,11 @@ namespace DeviceDataDisplay
             SetDeviceResolution setdeviceresoultion = new SetDeviceResolution();
             setdeviceresoultion.ShowDialog();
         }
+
+        private void addAlarmToDevicesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetDeviceAlarm devicealarm= new SetDeviceAlarm();
+            devicealarm.ShowDialog();
+        }
     }
 }

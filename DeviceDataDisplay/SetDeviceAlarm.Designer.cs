@@ -1,6 +1,6 @@
 ﻿namespace DeviceDataDisplay
 {
-    partial class SetDeviceResolution
+    partial class SetDeviceAlarm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,43 +28,42 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.DeviceResolutionGV = new System.Windows.Forms.DataGridView();
-            this.AddResolution = new System.Windows.Forms.Button();
+            this.DeviceAlarmGV = new System.Windows.Forms.DataGridView();
+            this.AddAlarm = new System.Windows.Forms.Button();
             this.Update = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
-            ((System.ComponentModel.ISupportInitialize)(this.DeviceResolutionGV)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.DeviceAlarmGV)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // DeviceResolutionGV
+            // DeviceAlarmGV
             // 
-            this.DeviceResolutionGV.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.DeviceResolutionGV.Location = new System.Drawing.Point(2, 12);
-            this.DeviceResolutionGV.Name = "DeviceResolutionGV";
-            this.DeviceResolutionGV.RowTemplate.Height = 24;
-            this.DeviceResolutionGV.Size = new System.Drawing.Size(797, 408);
-            this.DeviceResolutionGV.TabIndex = 0;
-            this.DeviceResolutionGV.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DeviceResolutionGV_CellContentClick);
-            this.DeviceResolutionGV.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.DeviceResolutionGV_CellLeave);
-            this.DeviceResolutionGV.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DeviceResolutionGV_EditingControlShowing);
+            this.DeviceAlarmGV.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.DeviceAlarmGV.Location = new System.Drawing.Point(3, -1);
+            this.DeviceAlarmGV.Name = "DeviceAlarmGV";
+            this.DeviceAlarmGV.RowTemplate.Height = 24;
+            this.DeviceAlarmGV.Size = new System.Drawing.Size(767, 408);
+            this.DeviceAlarmGV.TabIndex = 1;
+            this.DeviceAlarmGV.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.DeviceAlarmGV_CellLeave);
+            this.DeviceAlarmGV.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DeviceAlarmGV_EditingControlShowing);
             // 
-            // AddResolution
+            // AddAlarm
             // 
-            this.AddResolution.Location = new System.Drawing.Point(428, 439);
-            this.AddResolution.Name = "AddResolution";
-            this.AddResolution.Size = new System.Drawing.Size(246, 46);
-            this.AddResolution.TabIndex = 5;
-            this.AddResolution.Text = "Add Resolution to device";
-            this.AddResolution.UseVisualStyleBackColor = false;
-            this.AddResolution.Click += new System.EventHandler(this.AddResolution_Click);
+            this.AddAlarm.Location = new System.Drawing.Point(391, 423);
+            this.AddAlarm.Name = "AddAlarm";
+            this.AddAlarm.Size = new System.Drawing.Size(246, 46);
+            this.AddAlarm.TabIndex = 7;
+            this.AddAlarm.Text = "Add Alarm to device";
+            this.AddAlarm.UseVisualStyleBackColor = false;
+            this.AddAlarm.Click += new System.EventHandler(this.AddAlarm_Click);
             // 
             // Update
             // 
-            this.Update.Location = new System.Drawing.Point(182, 439);
+            this.Update.Location = new System.Drawing.Point(145, 423);
             this.Update.Name = "Update";
             this.Update.Size = new System.Drawing.Size(116, 44);
-            this.Update.TabIndex = 4;
+            this.Update.TabIndex = 6;
             this.Update.Text = "Update";
             this.Update.UseVisualStyleBackColor = false;
             this.Update.Click += new System.EventHandler(this.Update_Click);
@@ -74,12 +73,11 @@
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.lblStatus});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 502);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 487);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(820, 33);
-            this.statusStrip1.TabIndex = 6;
+            this.statusStrip1.Size = new System.Drawing.Size(782, 33);
+            this.statusStrip1.TabIndex = 8;
             this.statusStrip1.Text = "statusStrip1";
-            this.statusStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.statusStrip1_ItemClicked);
             // 
             // lblStatus
             // 
@@ -88,25 +86,26 @@
             this.lblStatus.Size = new System.Drawing.Size(96, 28);
             this.lblStatus.Text = "Messages";
             // 
-            // SetDeviceResolution
+            // SetDeviceAlarm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AllowDrop = true;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 26F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.RoyalBlue;
-            this.ClientSize = new System.Drawing.Size(820, 535);
+            this.ClientSize = new System.Drawing.Size(782, 520);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.AddResolution);
+            this.Controls.Add(this.AddAlarm);
             this.Controls.Add(this.Update);
-            this.Controls.Add(this.DeviceResolutionGV);
-            this.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Controls.Add(this.DeviceAlarmGV);
+            this.Font = new System.Drawing.Font("Arial Unicode MS", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "SetDeviceResolution";
+            this.Name = "SetDeviceAlarm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "SetDeviceResolution";
-            this.Load += new System.EventHandler(this.SetDeviceResolution_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.DeviceResolutionGV)).EndInit();
+            this.Text = "SetDeviceAlarm";
+            this.Load += new System.EventHandler(this.SetDeviceAlarm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.DeviceAlarmGV)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -116,8 +115,8 @@
 
         #endregion
 
-        private System.Windows.Forms.DataGridView DeviceResolutionGV;
-        private System.Windows.Forms.Button AddResolution;
+        private System.Windows.Forms.DataGridView DeviceAlarmGV;
+        private System.Windows.Forms.Button AddAlarm;
         private System.Windows.Forms.Button Update;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;

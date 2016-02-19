@@ -89,7 +89,7 @@ namespace DeviceDataDisplay
                 DeviceResolutionGV.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DeviceResolutionGV.Columns[2].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DeviceResolutionGV.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
-
+                DeviceResolutionGV.Columns[4].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DeviceResolutionGV.AllowUserToAddRows = false;
 
             }
@@ -256,7 +256,15 @@ namespace DeviceDataDisplay
             }
         }
 
-        
+        private void DeviceResolutionGV_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void statusStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+
+        }
     }
 }
 
