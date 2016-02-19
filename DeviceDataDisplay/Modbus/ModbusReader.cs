@@ -20,10 +20,11 @@ namespace DeviceDataDisplay.Modbus
         Dictionary<ushort, string> deviceunits1 = new Dictionary<ushort, string>();
         Dictionary<ushort, string> devicealarm1 = new Dictionary<ushort, string>();
         
-        public ModbusReader(int channelid,SerialPort serialport)
+        public ModbusReader(int channelid,SerialPort serialport,int intervalbetweencommands)
         {
             mb.sp = serialport;
             Channelid = channelid;
+            IntervalBetweenCommands = intervalbetweencommands;
             
         }
         public string AlarmMode { get; set; }
@@ -47,6 +48,8 @@ namespace DeviceDataDisplay.Modbus
         public bool DeviceNotFound { get; set; }
 
         public bool IsIntialzeDB { get; set; } = false;
+
+        public int IntervalBetweenCommands { get; set; }
         
         public bool IntializeDB()
         {
@@ -127,7 +130,7 @@ namespace DeviceDataDisplay.Modbus
 
                     //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
                     mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unit_index);
-                    Thread.Sleep(50);
+                    Thread.Sleep(IntervalBetweenCommands);
                     
                     var queryunits = "Select units_value from device_units where deviceID=" + deviceID + " and units_index = " + unit_index[0];
                     getdevice.CommandText = queryunits;
@@ -154,7 +157,7 @@ namespace DeviceDataDisplay.Modbus
                 {
                     ushort[] alarm_index = new ushort[devicevalues1[7]];
                     mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[6], devicevalues1[7], ref alarm_index);
-                    Thread.Sleep(50);
+                    Thread.Sleep(IntervalBetweenCommands);
                     var queryalarm = "Select alarm_value from device_alarm where deviceID=" + deviceID + " and alarm_index=" + alarm_index[0];
                     getdevice.CommandText = queryalarm;
                     getdevice.Connection = Connection1;
@@ -184,7 +187,7 @@ namespace DeviceDataDisplay.Modbus
                 {
                     ushort[] resolution_index = new ushort[devicevalues1[9]];
                     mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[8], devicevalues1[9], ref resolution_index);
-                    Thread.Sleep(50);
+                    Thread.Sleep(IntervalBetweenCommands);
                     var queryres = "Select resolution_value from device_resolution where deviceID=" + deviceID + " and resolution_index = "+ resolution_index[0];
                     getdevice.CommandText = queryres;
                     getdevice.Connection = Connection1;
@@ -299,14 +302,14 @@ namespace DeviceDataDisplay.Modbus
                         }
 
                     }
-                    Thread.Sleep(50);
+                    Thread.Sleep(IntervalBetweenCommands);
                 }
                 else if (devicevalues1[3] == 1)// if meter value return datatype is ushort or integer(C) no need shift it is only 16bit value
                 {
                     ushort[] values = new ushort[devicevalues1[3]];
                     mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[2], devicevalues1[3], ref values);
                     intValue = (int)values[0];
-                    Thread.Sleep(50);
+                    Thread.Sleep(IntervalBetweenCommands);
 
                 }
                 //get resolution
@@ -351,7 +354,7 @@ namespace DeviceDataDisplay.Modbus
 
                     //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
                     mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[11], devicevalues1[12], ref alarm_status);
-                    Thread.Sleep(50);
+                    Thread.Sleep(IntervalBetweenCommands);
                     AlarmStatus = (alarm_status[0] == 0) ? false : true;
 
                 }

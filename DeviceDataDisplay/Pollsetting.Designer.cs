@@ -54,7 +54,7 @@
             this.groupBox1.Font = new System.Drawing.Font("Arial Unicode MS", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(24, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(528, 266);
+            this.groupBox1.Size = new System.Drawing.Size(556, 266);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Poll Settings";
@@ -63,20 +63,20 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(34, 195);
+            this.label3.Location = new System.Drawing.Point(21, 195);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(201, 26);
+            this.label3.Size = new System.Drawing.Size(242, 26);
             this.label3.TabIndex = 6;
-            this.label3.Text = "First time poll interval";
+            this.label3.Text = "First time poll interval(ms)";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(32, 144);
+            this.label2.Location = new System.Drawing.Point(15, 144);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(302, 26);
+            this.label2.Size = new System.Drawing.Size(343, 26);
             this.label2.TabIndex = 4;
-            this.label2.Text = "Interval between each command";
+            this.label2.Text = "Interval between each command(ms)";
             this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // CmbBaudRates
@@ -90,7 +90,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(34, 93);
+            this.label1.Location = new System.Drawing.Point(21, 93);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(106, 26);
             this.label1.TabIndex = 2;
@@ -107,7 +107,7 @@
             // lblPortName
             // 
             this.lblPortName.AutoSize = true;
-            this.lblPortName.Location = new System.Drawing.Point(34, 47);
+            this.lblPortName.Location = new System.Drawing.Point(21, 47);
             this.lblPortName.Name = "lblPortName";
             this.lblPortName.Size = new System.Drawing.Size(108, 26);
             this.lblPortName.TabIndex = 0;
@@ -116,7 +116,7 @@
             // btnSave
             // 
             this.btnSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSave.Location = new System.Drawing.Point(236, 294);
+            this.btnSave.Location = new System.Drawing.Point(254, 294);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(105, 37);
             this.btnSave.TabIndex = 1;
@@ -145,7 +145,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.RoyalBlue;
-            this.ClientSize = new System.Drawing.Size(572, 347);
+            this.ClientSize = new System.Drawing.Size(604, 348);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.groupBox1);
             this.MaximizeBox = false;

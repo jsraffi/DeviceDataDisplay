@@ -35,11 +35,13 @@
             this.addUnitsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pollSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deviceSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mapDevicesToChannelsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ShowChannels = new System.Windows.Forms.ToolStripComboBox();
             this.lblSelectChannel = new System.Windows.Forms.Label();
             this.poller = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
-            this.mapDevicesToChannelsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addUnitsToDevicesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addResolutionToDevicesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainmenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -65,7 +67,9 @@
             this.addUnitsToolStripMenuItem,
             this.pollSettingsToolStripMenuItem,
             this.deviceSettingsToolStripMenuItem,
-            this.mapDevicesToChannelsToolStripMenuItem});
+            this.mapDevicesToChannelsToolStripMenuItem,
+            this.addUnitsToDevicesToolStripMenuItem,
+            this.addResolutionToDevicesToolStripMenuItem});
             this.mainMenuToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 12F);
             this.mainMenuToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.mainMenuToolStripMenuItem.Name = "mainMenuToolStripMenuItem";
@@ -76,37 +80,44 @@
             // setUnitsToolStripMenuItem
             // 
             this.setUnitsToolStripMenuItem.Name = "setUnitsToolStripMenuItem";
-            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(270, 32);
+            this.setUnitsToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
             this.setUnitsToolStripMenuItem.Text = "Add units to channel";
             this.setUnitsToolStripMenuItem.Click += new System.EventHandler(this.setUnitsToolStripMenuItem_Click);
             // 
             // setLevelToolStripMenuItem
             // 
             this.setLevelToolStripMenuItem.Name = "setLevelToolStripMenuItem";
-            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(270, 32);
+            this.setLevelToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
             this.setLevelToolStripMenuItem.Text = "Channel Setting";
             this.setLevelToolStripMenuItem.Click += new System.EventHandler(this.setLevelToolStripMenuItem_Click);
             // 
             // addUnitsToolStripMenuItem
             // 
             this.addUnitsToolStripMenuItem.Name = "addUnitsToolStripMenuItem";
-            this.addUnitsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
+            this.addUnitsToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
             this.addUnitsToolStripMenuItem.Text = "Add Units";
             this.addUnitsToolStripMenuItem.Click += new System.EventHandler(this.addUnitsToolStripMenuItem_Click);
             // 
             // pollSettingsToolStripMenuItem
             // 
             this.pollSettingsToolStripMenuItem.Name = "pollSettingsToolStripMenuItem";
-            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
+            this.pollSettingsToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
             this.pollSettingsToolStripMenuItem.Text = "Poll Settings";
             this.pollSettingsToolStripMenuItem.Click += new System.EventHandler(this.pollSettingsToolStripMenuItem_Click);
             // 
             // deviceSettingsToolStripMenuItem
             // 
             this.deviceSettingsToolStripMenuItem.Name = "deviceSettingsToolStripMenuItem";
-            this.deviceSettingsToolStripMenuItem.Size = new System.Drawing.Size(224, 32);
+            this.deviceSettingsToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
             this.deviceSettingsToolStripMenuItem.Text = "Device Settings";
             this.deviceSettingsToolStripMenuItem.Click += new System.EventHandler(this.deviceSettingsToolStripMenuItem_Click);
+            // 
+            // mapDevicesToChannelsToolStripMenuItem
+            // 
+            this.mapDevicesToChannelsToolStripMenuItem.Name = "mapDevicesToChannelsToolStripMenuItem";
+            this.mapDevicesToChannelsToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
+            this.mapDevicesToChannelsToolStripMenuItem.Text = "Map Devices to Channels";
+            this.mapDevicesToChannelsToolStripMenuItem.Click += new System.EventHandler(this.mapDevicesToChannelsToolStripMenuItem_Click);
             // 
             // ShowChannels
             // 
@@ -152,12 +163,19 @@
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblStatus.Click += new System.EventHandler(this.label1_Click);
             // 
-            // mapDevicesToChannelsToolStripMenuItem
+            // addUnitsToDevicesToolStripMenuItem
             // 
-            this.mapDevicesToChannelsToolStripMenuItem.Name = "mapDevicesToChannelsToolStripMenuItem";
-            this.mapDevicesToChannelsToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
-            this.mapDevicesToChannelsToolStripMenuItem.Text = "Map Devices to Channels";
-            this.mapDevicesToChannelsToolStripMenuItem.Click += new System.EventHandler(this.mapDevicesToChannelsToolStripMenuItem_Click);
+            this.addUnitsToDevicesToolStripMenuItem.Name = "addUnitsToDevicesToolStripMenuItem";
+            this.addUnitsToDevicesToolStripMenuItem.Size = new System.Drawing.Size(308, 32);
+            this.addUnitsToDevicesToolStripMenuItem.Text = "Add Units to devices";
+            this.addUnitsToDevicesToolStripMenuItem.Click += new System.EventHandler(this.addUnitsToDevicesToolStripMenuItem_Click);
+            // 
+            // addResolutionToDevicesToolStripMenuItem
+            // 
+            this.addResolutionToDevicesToolStripMenuItem.Name = "addResolutionToDevicesToolStripMenuItem";
+            this.addResolutionToDevicesToolStripMenuItem.Size = new System.Drawing.Size(317, 32);
+            this.addResolutionToDevicesToolStripMenuItem.Text = "Add Resolution to devices";
+            this.addResolutionToDevicesToolStripMenuItem.Click += new System.EventHandler(this.addResolutionToDevicesToolStripMenuItem_Click);
             // 
             // DeviceDataDisplay
             // 
@@ -198,6 +216,8 @@
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.ToolStripMenuItem deviceSettingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mapDevicesToChannelsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addUnitsToDevicesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addResolutionToDevicesToolStripMenuItem;
     }
 }
 

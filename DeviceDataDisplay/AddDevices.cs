@@ -44,11 +44,10 @@ namespace DeviceDataDisplay
                 adddevicegidview.DataSource = null;
                 adddevicegidview.Rows.Clear();
                 adddevicegidview.Columns.Clear();
-                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,Endianess from devices";
+                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
                 MySqlDataAdapter deviceadapter = new MySqlDataAdapter(query, Connection);
                 DataSet devicedata = new DataSet();
                 deviceadapter.Fill(devicedata, "devices");
-
                 DataTable tbldevices = new DataTable();
                 tbldevices = devicedata.Tables["devices"];
                 adddevicegidview.DataSource = tbldevices;
@@ -63,6 +62,8 @@ namespace DeviceDataDisplay
                 adddevicegidview.Columns["alarm_return_datatype"].ReadOnly = true;
                 adddevicegidview.Columns["resolution_start_address"].ReadOnly = false;
                 adddevicegidview.Columns["resolution_return_datatype"].ReadOnly = true;
+                adddevicegidview.Columns["alarm_status_start_address"].ReadOnly = false;
+                adddevicegidview.Columns["alarm_status_return_datatype"].ReadOnly = true;
                 adddevicegidview.Columns["Endianess"].ReadOnly = true;
 
                 adddevicegidview.Columns[0].Width = 125;
@@ -86,8 +87,27 @@ namespace DeviceDataDisplay
                 adddevicegidview.Columns[9].HeaderText = "Res Address";
                 adddevicegidview.Columns[10].Width = 125;
                 adddevicegidview.Columns[10].HeaderText = "Res Datatype";
-                adddevicegidview.Columns[11].Width = 125;
+                adddevicegidview.Columns[11].Width = 150;
+                adddevicegidview.Columns[11].HeaderText = "Alarm status address";
+                adddevicegidview.Columns[12].Width = 200;
+                adddevicegidview.Columns[12].HeaderText = "Alarm status Datatype";
+                adddevicegidview.Columns[13].Width = 150;
 
+
+
+
+                adddevicegidview.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[2].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[4].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[5].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[6].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[7].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[8].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[9].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[10].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[11].SortMode = DataGridViewColumnSortMode.NotSortable;
 
                 Dictionary<int, String> modbus_return_datatypes = new Dictionary<int, string>();
                 modbus_return_datatypes.Add(1, "uinteger-16 bits");
@@ -102,7 +122,6 @@ namespace DeviceDataDisplay
                 datatypevaluecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 datatypevaluecolumn.Width = 150;
 
-                
                 adddevicegidview.Columns.Insert(4, datatypevaluecolumn);
                 adddevicegidview.Columns[5].Visible = false;
 
@@ -119,7 +138,7 @@ namespace DeviceDataDisplay
                 unitdatatypecolumn.HeaderText = "Unit datatype";
                 unitdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 unitdatatypecolumn.Width = 150;
-               
+
                 adddevicegidview.Columns.Insert(7, unitdatatypecolumn);
                 adddevicegidview.Columns[8].Visible = false;
 
@@ -133,11 +152,8 @@ namespace DeviceDataDisplay
                 alarmdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 alarmdatatypecolumn.Width = 150;
 
-                
                 adddevicegidview.Columns.Insert(10, alarmdatatypecolumn);
                 adddevicegidview.Columns[11].Visible = false;
-
-
 
                 DataGridViewComboBoxCell resdatatypes = new DataGridViewComboBoxCell();
                 resdatatypes.DataSource = new BindingSource(modbus_unit_alaram_res_datatypes, null);
@@ -147,9 +163,24 @@ namespace DeviceDataDisplay
                 resdatatypecolumn.HeaderText = "Res datatype";
                 resdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 resdatatypecolumn.Width = 150;
-               
+
                 adddevicegidview.Columns.Insert(13, resdatatypecolumn);
                 adddevicegidview.Columns[14].Visible = false;
+
+
+
+                DataGridViewComboBoxCell alarmstatus = new DataGridViewComboBoxCell();
+                alarmstatus.DataSource = new BindingSource(modbus_unit_alaram_res_datatypes, null);
+                alarmstatus.ValueMember = "Key";
+                alarmstatus.DisplayMember = "Value";
+                DataGridViewColumn alarmstatusdatatypecolumn = new DataGridViewColumn(alarmstatus);
+                alarmstatusdatatypecolumn.HeaderText = "Alarm Status Datatype";
+                alarmstatusdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
+                alarmstatusdatatypecolumn.Width = 150;
+
+                adddevicegidview.Columns.Insert(16, alarmstatusdatatypecolumn);
+                adddevicegidview.Columns[17].Visible = false;
+
 
 
                 Dictionary<int, String> Endianess = new Dictionary<int, string>();
@@ -164,23 +195,37 @@ namespace DeviceDataDisplay
                 endianessvaluecolumn.HeaderText = "Endianess";
                 endianessvaluecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 endianessvaluecolumn.Width = 150;
-                
-                adddevicegidview.Columns.Insert(15, endianessvaluecolumn);
-                adddevicegidview.Columns[16].Visible = false;
+
+                adddevicegidview.Columns.Insert(18, endianessvaluecolumn);
+                adddevicegidview.Columns[19].Visible = false;
+
+
+
+
                 foreach (DataGridViewRow item in adddevicegidview.Rows)
                 {
                     item.Cells[4].Value = item.Cells[5].Value;
                     item.Cells[7].Value = item.Cells[8].Value;
                     item.Cells[10].Value = item.Cells[11].Value;
                     item.Cells[13].Value = item.Cells[14].Value;
-                    item.Cells[15].Value = item.Cells[16].Value;
-
+                    item.Cells[16].Value = item.Cells[17].Value;
+                    item.Cells[18].Value = item.Cells[19].Value;
                     item.Height = 30;
                 }
+                adddevicegidview.Columns[12].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[13].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[14].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[15].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[16].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[17].SortMode = DataGridViewColumnSortMode.NotSortable;
+                adddevicegidview.Columns[18].SortMode = DataGridViewColumnSortMode.NotSortable;
+
+                adddevicegidview.AllowUserToAddRows = false;
+            }
 
                
-            }
-        }
+   }
+        
         private bool SavetoDB()
         {   
             try
@@ -200,14 +245,18 @@ namespace DeviceDataDisplay
                     string resaddress = (txtResolutionAddress.Text != "") ? txtResolutionAddress.Text : "null";
                     string resdatatype = (cmbResolutionDatatype.SelectedValue.ToString() == "100") ? "null" : cmbResolutionDatatype.SelectedValue.ToString();
 
+                    string alarmstatusaddress = (txtAlarmStatus.Text != "") ? txtAlarmStatus.Text : "null";
+                    string alarmstatusdatatype = (cmbAlarmStatus.SelectedValue.ToString() == "100") ? "null" : cmbAlarmStatus.SelectedValue.ToString();
+
                     string SQL = "Insert into devices(device_name, slaveID, value_start_address, value_return_datatype," +
                                  "unit_start_address, unit_return_datatype, alarm_start_address, alarm_return_datatype," +
-                                  "resolution_start_address, resolution_return_datatype, Endianess)" +
+                                  "resolution_start_address, resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,Endianess)" +
                                   "Values('" + txtDeviceName.Text + "'," + txtSlaveID.Text +
                                   "," + txtValueAddress.Text + "," + cmbValueDatatype.SelectedValue +
                                   "," + unitaddress + "," + unitdatatype +
                                   "," + alarmaddress+ "," + alarmdatatype+
-                                  "," + resaddress + ","+ resdatatype +  
+                                  "," + resaddress + ","+ resdatatype +
+                                  "," + alarmstatusaddress + "," + alarmstatusdatatype +
                                   "," + cmbEndianess.SelectedValue + ")";
 
                     MySqlCommand cmdadddevice = new MySqlCommand();
@@ -346,26 +395,55 @@ namespace DeviceDataDisplay
 
                 }
             }
+            if ((txtAlarmStatus.Text == "") ^ (cmbAlarmStatus.Text == ""))
+            {
+                txtAlarmStatus.Focus();
+                lblStatus.Text = "Both Alarm status address & Alarm Status datatype is required else both are not required";
+                validateStatus = false;
+                return false;
+            }
+            else if (txtAlarmStatus.Text != "")
+            {
+                if (!(int.TryParse(txtAlarmStatus.Text, out outvalue)))
+                {
+                    txtAlarmStatus.Focus();
+                    lblStatus.Text = "Alarm status address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
 
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtAlarmStatus.Focus();
+                    lblStatus.Text = "Alarm status should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
+            }
             List<string> address = new List<string>();
             address.Add(txtValueAddress.Text);
                
-            if(txtUnitAddress.Text != null)
+            if(txtUnitAddress.Text != "")
             {
                 address.Add(txtUnitAddress.Text);
                     
             }
 
-            if (txtResolutionAddress.Text != null)
+            if (txtResolutionAddress.Text != "")
             {
                 address.Add(txtResolutionAddress.Text);
                     
             }
 
-            if (txtAlarmAddress.Text != null)
+            if (txtAlarmAddress.Text != "")
             {
                 address.Add(txtAlarmAddress.Text);
                     
+            }
+            if(txtAlarmStatus.Text != "")
+            {
+                address.Add(txtAlarmStatus.Text);
             }
             
             if(address.Count() > 0)
@@ -407,6 +485,12 @@ namespace DeviceDataDisplay
                 //new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
                 new Datatypes { valueIndex=100, valueDatatype ="" }
             };
+            List<Datatypes> alarmstatusdatatypes = new List<Datatypes>()
+            {
+                new Datatypes { valueIndex=1, valueDatatype ="UInteger 16bit" },
+                //new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
+                new Datatypes { valueIndex=100, valueDatatype ="" }
+            };
             List<Datatypes> Endianessvalues = new List<Datatypes>()
             {
                 new Datatypes { valueIndex=0, valueDatatype ="Little Endian" },
@@ -442,6 +526,12 @@ namespace DeviceDataDisplay
             cmbAlarmDatatype.DisplayMember = "valueDatatype";
             cmbAlarmDatatype.SelectedIndex = cmbAlarmDatatype.FindStringExact("");
             cmbAlarmDatatype.DropDownStyle = ComboBoxStyle.DropDownList;
+
+            cmbAlarmStatus.DataSource = alarmstatusdatatypes;
+            cmbAlarmStatus.ValueMember = "valueIndex";
+            cmbAlarmStatus.DisplayMember = "valueDatatype";
+            cmbAlarmStatus.SelectedIndex = cmbAlarmDatatype.FindStringExact("");
+            cmbAlarmStatus.DropDownStyle = ComboBoxStyle.DropDownList;
         }
         private class Datatypes
         {
@@ -450,5 +540,24 @@ namespace DeviceDataDisplay
             public string valueDatatype { get; set; }
         }
 
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label8_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     } 
 }

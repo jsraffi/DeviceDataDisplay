@@ -86,11 +86,23 @@
     <Compile Include="AddDevices.Designer.cs">
       <DependentUpon>AddDevices.cs</DependentUpon>
     </Compile>
+    <Compile Include="AddResoultionToDevices.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddResoultionToDevices.Designer.cs">
+      <DependentUpon>AddResoultionToDevices.cs</DependentUpon>
+    </Compile>
     <Compile Include="AddUnits.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="AddUnits.Designer.cs">
       <DependentUpon>AddUnits.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AddUnitsToDevice.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddUnitsToDevice.Designer.cs">
+      <DependentUpon>AddUnitsToDevice.cs</DependentUpon>
     </Compile>
     <Compile Include="DeviceDataDisplay.cs">
       <SubType>Form</SubType>
@@ -120,6 +132,18 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SetDeviceResolution.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SetDeviceResolution.Designer.cs">
+      <DependentUpon>SetDeviceResolution.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SetDeviceUnits.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SetDeviceUnits.Designer.cs">
+      <DependentUpon>SetDeviceUnits.cs</DependentUpon>
+    </Compile>
     <Compile Include="SetLevel.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -136,8 +160,14 @@
     <EmbeddedResource Include="AddDevices.resx">
       <DependentUpon>AddDevices.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="AddResoultionToDevices.resx">
+      <DependentUpon>AddResoultionToDevices.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="AddUnits.resx">
       <DependentUpon>AddUnits.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AddUnitsToDevice.resx">
+      <DependentUpon>AddUnitsToDevice.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DeviceDataDisplay.resx">
       <DependentUpon>DeviceDataDisplay.cs</DependentUpon>
@@ -161,6 +191,12 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="SetDeviceResolution.resx">
+      <DependentUpon>SetDeviceResolution.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SetDeviceUnits.resx">
+      <DependentUpon>SetDeviceUnits.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="SetLevel.resx">
       <DependentUpon>SetLevel.cs</DependentUpon>
     </EmbeddedResource>

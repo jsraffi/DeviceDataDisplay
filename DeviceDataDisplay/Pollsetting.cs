@@ -75,6 +75,12 @@ namespace DeviceDataDisplay
                 conn.Open();
                 cmdminmaxUpdate.ExecuteNonQuery();
             }
+
+            if (System.Windows.Forms.Application.OpenForms["DeviceDataDisplay"] != null)
+            {
+
+                (System.Windows.Forms.Application.OpenForms["DeviceDataDisplay"] as DeviceDataDisplay).getPollSetting();
+            }
         }
     }
 }

@@ -58,7 +58,7 @@
             // btnSave
             // 
             this.btnSave.Font = new System.Drawing.Font("Arial Unicode MS", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSave.Location = new System.Drawing.Point(499, 382);
+            this.btnSave.Location = new System.Drawing.Point(552, 382);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(162, 37);
             this.btnSave.TabIndex = 1;
@@ -68,7 +68,7 @@
             // 
             // btnAdd
             // 
-            this.btnAdd.Location = new System.Drawing.Point(690, 383);
+            this.btnAdd.Location = new System.Drawing.Point(743, 383);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(124, 36);
             this.btnAdd.TabIndex = 2;

@@ -56,6 +56,10 @@
             this.label6 = new System.Windows.Forms.Label();
             this.stsAddDevices = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.txtAlarmStatus = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.cmbAlarmStatus = new System.Windows.Forms.ComboBox();
             this.groupBox1.SuspendLayout();
             this.grpUnitsResolution.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -64,10 +68,10 @@
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(633, 50);
+            this.btnSave.Location = new System.Drawing.Point(528, 488);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(109, 41);
-            this.btnSave.TabIndex = 0;
+            this.btnSave.TabIndex = 14;
             this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = false;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
@@ -95,7 +99,7 @@
             this.cmbValueDatatype.Location = new System.Drawing.Point(589, 84);
             this.cmbValueDatatype.Name = "cmbValueDatatype";
             this.cmbValueDatatype.Size = new System.Drawing.Size(143, 34);
-            this.cmbValueDatatype.TabIndex = 7;
+            this.cmbValueDatatype.TabIndex = 4;
             // 
             // lblValueDatatype
             // 
@@ -111,7 +115,7 @@
             this.txtValueAddress.Location = new System.Drawing.Point(403, 84);
             this.txtValueAddress.Name = "txtValueAddress";
             this.txtValueAddress.Size = new System.Drawing.Size(160, 34);
-            this.txtValueAddress.TabIndex = 5;
+            this.txtValueAddress.TabIndex = 3;
             // 
             // lblValueAddress
             // 
@@ -124,10 +128,11 @@
             // 
             // txtSlaveID
             // 
+            this.txtSlaveID.AcceptsTab = true;
             this.txtSlaveID.Location = new System.Drawing.Point(217, 84);
             this.txtSlaveID.Name = "txtSlaveID";
             this.txtSlaveID.Size = new System.Drawing.Size(160, 34);
-            this.txtSlaveID.TabIndex = 3;
+            this.txtSlaveID.TabIndex = 2;
             // 
             // lblSlaveID
             // 
@@ -142,6 +147,7 @@
             // 
             this.txtDeviceName.Location = new System.Drawing.Point(36, 84);
             this.txtDeviceName.Name = "txtDeviceName";
+            this.txtDeviceName.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.txtDeviceName.Size = new System.Drawing.Size(160, 34);
             this.txtDeviceName.TabIndex = 1;
             // 
@@ -177,7 +183,7 @@
             this.cmbResolutionDatatype.Location = new System.Drawing.Point(584, 75);
             this.cmbResolutionDatatype.Name = "cmbResolutionDatatype";
             this.cmbResolutionDatatype.Size = new System.Drawing.Size(143, 34);
-            this.cmbResolutionDatatype.TabIndex = 11;
+            this.cmbResolutionDatatype.TabIndex = 8;
             // 
             // lblUnitDatatype
             // 
@@ -193,7 +199,7 @@
             this.txtResolutionAddress.Location = new System.Drawing.Point(390, 75);
             this.txtResolutionAddress.Name = "txtResolutionAddress";
             this.txtResolutionAddress.Size = new System.Drawing.Size(160, 34);
-            this.txtResolutionAddress.TabIndex = 13;
+            this.txtResolutionAddress.TabIndex = 7;
             // 
             // label4
             // 
@@ -210,7 +216,7 @@
             this.cmbUnitDatatype.Location = new System.Drawing.Point(214, 75);
             this.cmbUnitDatatype.Name = "cmbUnitDatatype";
             this.cmbUnitDatatype.Size = new System.Drawing.Size(143, 34);
-            this.cmbUnitDatatype.TabIndex = 8;
+            this.cmbUnitDatatype.TabIndex = 6;
             // 
             // label1
             // 
@@ -226,7 +232,7 @@
             this.txtUnitAddress.Location = new System.Drawing.Point(29, 75);
             this.txtUnitAddress.Name = "txtUnitAddress";
             this.txtUnitAddress.Size = new System.Drawing.Size(160, 34);
-            this.txtUnitAddress.TabIndex = 9;
+            this.txtUnitAddress.TabIndex = 5;
             // 
             // label2
             // 
@@ -240,15 +246,15 @@
             // cmbEndianess
             // 
             this.cmbEndianess.FormattingEnabled = true;
-            this.cmbEndianess.Location = new System.Drawing.Point(405, 77);
+            this.cmbEndianess.Location = new System.Drawing.Point(238, 492);
             this.cmbEndianess.Name = "cmbEndianess";
             this.cmbEndianess.Size = new System.Drawing.Size(143, 34);
-            this.cmbEndianess.TabIndex = 15;
+            this.cmbEndianess.TabIndex = 13;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(401, 33);
+            this.label3.Location = new System.Drawing.Point(92, 495);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(104, 26);
             this.label3.TabIndex = 16;
@@ -256,17 +262,18 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.cmbAlarmStatus);
+            this.groupBox2.Controls.Add(this.label8);
+            this.groupBox2.Controls.Add(this.label7);
+            this.groupBox2.Controls.Add(this.txtAlarmStatus);
             this.groupBox2.Controls.Add(this.cmbAlarmDatatype);
             this.groupBox2.Controls.Add(this.label5);
             this.groupBox2.Controls.Add(this.txtAlarmAddress);
             this.groupBox2.Controls.Add(this.label6);
-            this.groupBox2.Controls.Add(this.btnSave);
-            this.groupBox2.Controls.Add(this.label3);
-            this.groupBox2.Controls.Add(this.cmbEndianess);
             this.groupBox2.Location = new System.Drawing.Point(35, 355);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(779, 127);
-            this.groupBox2.TabIndex = 17;
+            this.groupBox2.TabIndex = 3;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Optional alarm and required Endianess parameter";
             // 
@@ -276,7 +283,7 @@
             this.cmbAlarmDatatype.Location = new System.Drawing.Point(223, 77);
             this.cmbAlarmDatatype.Name = "cmbAlarmDatatype";
             this.cmbAlarmDatatype.Size = new System.Drawing.Size(143, 34);
-            this.cmbAlarmDatatype.TabIndex = 17;
+            this.cmbAlarmDatatype.TabIndex = 10;
             // 
             // label5
             // 
@@ -292,7 +299,7 @@
             this.txtAlarmAddress.Location = new System.Drawing.Point(29, 77);
             this.txtAlarmAddress.Name = "txtAlarmAddress";
             this.txtAlarmAddress.Size = new System.Drawing.Size(160, 34);
-            this.txtAlarmAddress.TabIndex = 19;
+            this.txtAlarmAddress.TabIndex = 9;
             // 
             // label6
             // 
@@ -308,9 +315,9 @@
             this.stsAddDevices.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.stsAddDevices.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.lblStatus});
-            this.stsAddDevices.Location = new System.Drawing.Point(0, 482);
+            this.stsAddDevices.Location = new System.Drawing.Point(0, 536);
             this.stsAddDevices.Name = "stsAddDevices";
-            this.stsAddDevices.Size = new System.Drawing.Size(870, 37);
+            this.stsAddDevices.Size = new System.Drawing.Size(855, 37);
             this.stsAddDevices.TabIndex = 18;
             this.stsAddDevices.Text = "Ready";
             // 
@@ -323,16 +330,56 @@
             this.lblStatus.Size = new System.Drawing.Size(79, 32);
             this.lblStatus.Text = "Ready";
             // 
+            // txtAlarmStatus
+            // 
+            this.txtAlarmStatus.Location = new System.Drawing.Point(403, 77);
+            this.txtAlarmStatus.Name = "txtAlarmStatus";
+            this.txtAlarmStatus.Size = new System.Drawing.Size(160, 34);
+            this.txtAlarmStatus.TabIndex = 11;
+            this.txtAlarmStatus.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(400, 33);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(168, 26);
+            this.label7.TabIndex = 22;
+            this.label7.Text = "Alam Status Addr";
+            this.label7.Click += new System.EventHandler(this.label7_Click);
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(584, 32);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(185, 26);
+            this.label8.TabIndex = 23;
+            this.label8.Text = "Alarm Status Dtype";
+            this.label8.Click += new System.EventHandler(this.label8_Click);
+            // 
+            // cmbAlarmStatus
+            // 
+            this.cmbAlarmStatus.FormattingEnabled = true;
+            this.cmbAlarmStatus.Location = new System.Drawing.Point(589, 77);
+            this.cmbAlarmStatus.Name = "cmbAlarmStatus";
+            this.cmbAlarmStatus.Size = new System.Drawing.Size(143, 34);
+            this.cmbAlarmStatus.TabIndex = 12;
+            this.cmbAlarmStatus.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            // 
             // AddDevices
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 26F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.RoyalBlue;
-            this.ClientSize = new System.Drawing.Size(870, 519);
+            this.ClientSize = new System.Drawing.Size(855, 573);
             this.Controls.Add(this.stsAddDevices);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.grpUnitsResolution);
             this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.cmbEndianess);
             this.Font = new System.Drawing.Font("Arial Unicode MS", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -385,5 +432,9 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.StatusStrip stsAddDevices;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
+        private System.Windows.Forms.TextBox txtAlarmStatus;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.ComboBox cmbAlarmStatus;
     }
 }
