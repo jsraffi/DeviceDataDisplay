@@ -27,7 +27,7 @@ namespace DeviceDataDisplay
             using (MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
             {
                 Connection.Open();
-                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
+                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,channel_name_address,channel_name_length,min_level_address,min_level_length,max_level_address,max_level_length,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
                 MySqlDataAdapter deviceadapter = new MySqlDataAdapter(query, Connection);
                 DataSet devicedata = new DataSet();
                 deviceadapter.Fill(devicedata, "devices");
@@ -38,15 +38,21 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns["device_name"].ReadOnly = false;
                 DevicesGV.Columns["slaveID"].ReadOnly = false;
                 DevicesGV.Columns["value_start_address"].ReadOnly = false;
-                DevicesGV.Columns["value_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["value_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["unit_start_address"].ReadOnly = false;
-                DevicesGV.Columns["unit_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["unit_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["alarm_start_address"].ReadOnly = false;
-                DevicesGV.Columns["alarm_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["alarm_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["resolution_start_address"].ReadOnly = false;
-                DevicesGV.Columns["resolution_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["resolution_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["alarm_status_start_address"].ReadOnly = false;
-                DevicesGV.Columns["alarm_status_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["alarm_status_return_datatype"].ReadOnly = false;
+                DevicesGV.Columns["channel_name_address"].ReadOnly = false;
+                DevicesGV.Columns["channel_name_length"].ReadOnly = false;
+                DevicesGV.Columns["min_level_address"].ReadOnly = false;
+                DevicesGV.Columns["min_level_length"].ReadOnly = false;
+                DevicesGV.Columns["max_level_address"].ReadOnly = false;
+                DevicesGV.Columns["max_level_length"].ReadOnly = false;
                 DevicesGV.Columns["Endianess"].ReadOnly = true;
 
                 DevicesGV.Columns[0].Width = 125;
@@ -75,7 +81,24 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns[12].Width = 200;
                 DevicesGV.Columns[12].HeaderText = "Alarm status Datatype";
                 DevicesGV.Columns[13].Width = 150;
+                DevicesGV.Columns[13].HeaderText = "Channel Name Address";
 
+                DevicesGV.Columns[14].Width = 150;
+                DevicesGV.Columns[14].HeaderText = "Channel Length";
+
+                DevicesGV.Columns[15].Width = 150;
+                DevicesGV.Columns[15].HeaderText = "Min level address";
+
+                DevicesGV.Columns[16].Width = 150;
+                DevicesGV.Columns[16].HeaderText = "Min level length";
+
+                DevicesGV.Columns[17].Width = 150;
+                DevicesGV.Columns[17].HeaderText = "Max level address";
+
+                DevicesGV.Columns[18].Width = 150;
+                DevicesGV.Columns[18].HeaderText = "Max level length";
+
+                DevicesGV.Columns[19].Width = 150;
 
 
 
@@ -91,7 +114,8 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns[9].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[10].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[11].SortMode = DataGridViewColumnSortMode.NotSortable;
-                
+
+                /*
                 Dictionary<int, String> modbus_return_datatypes = new Dictionary<int, string>();
                 modbus_return_datatypes.Add(1, "uinteger-16 bits");
                 modbus_return_datatypes.Add(2, "ulong-32 bits");
@@ -106,6 +130,7 @@ namespace DeviceDataDisplay
                 datatypevaluecolumn.Width = 150;
 
                 DevicesGV.Columns.Insert(4, datatypevaluecolumn);
+                
                 DevicesGV.Columns[5].Visible = false;
 
                 Dictionary<int, String> modbus_unit_alaram_res_datatypes = new Dictionary<int, string>();
@@ -164,7 +189,7 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns.Insert(16, alarmstatusdatatypecolumn);
                 DevicesGV.Columns[17].Visible = false;
 
-
+                */
 
                 Dictionary<int, String> Endianess = new Dictionary<int, string>();
                 Endianess.Add(0, "LittleEndian");
@@ -179,11 +204,11 @@ namespace DeviceDataDisplay
                 endianessvaluecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 endianessvaluecolumn.Width = 150;
 
-                DevicesGV.Columns.Insert(18, endianessvaluecolumn);
-                DevicesGV.Columns[19].Visible = false;
+                DevicesGV.Columns.Insert(19, endianessvaluecolumn);
+                DevicesGV.Columns[20].Visible = false;
 
 
-
+                /*
 
                 foreach (DataGridViewRow item in DevicesGV.Rows)
                 {
@@ -195,16 +220,25 @@ namespace DeviceDataDisplay
                     item.Cells[18].Value = item.Cells[19].Value;
                     item.Height = 30;
                 }
+                */
+                foreach (DataGridViewRow item in DevicesGV.Rows)
+                {
+                    item.Height = 30;
+                    item.Cells[19].Value = item.Cells[20].Value;
+                }
+
+
                 DevicesGV.Columns[12].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[13].SortMode = DataGridViewColumnSortMode.NotSortable;
+                
                 DevicesGV.Columns[14].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[15].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[16].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[17].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[18].SortMode = DataGridViewColumnSortMode.NotSortable;
-
+                DevicesGV.Columns[19].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.AllowUserToAddRows = false;
-
+                
                 
 
             }
@@ -245,7 +279,7 @@ namespace DeviceDataDisplay
                 cmbvalue.SelectedIndexChanged += new EventHandler(value_SelectedIndexChanged);
             }
 
-            if (DevicesGV.CurrentCell.ColumnIndex == 18 && e.Control is ComboBox)
+            if (DevicesGV.CurrentCell.ColumnIndex == 19 && e.Control is ComboBox)
             {
 
                 cmbvalue.SelectedIndexChanged += new EventHandler(value_SelectedIndexChanged);
@@ -313,9 +347,9 @@ namespace DeviceDataDisplay
                 }
             }
 
-            if (DevicesGV.CurrentCell.ColumnIndex == 18)
+            if (DevicesGV.CurrentCell.ColumnIndex == 19)
             {
-                DevicesGV.CurrentRow.Cells[19].Value = cmbglobal.SelectedValue.ToString();
+                DevicesGV.CurrentRow.Cells[20].Value = cmbglobal.SelectedValue.ToString();
                 
             }
             //cmbvalue.SelectedIndexChanged += new EventHandler(value_SelectedIndexChanged);
@@ -334,32 +368,39 @@ namespace DeviceDataDisplay
                 {
                     MySqlConnection conn = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]);
                     conn.Open();
-                    MySqlCommand deviceUpdate = new MySqlCommand();
-
                     foreach (DataRow row in tblchanges.Rows)
                     {
-                        if (row[0].ToString() != null)
+                        if (row[0].ToString() != string.Empty)
                         {
                             //string rowvalues = row[0].ToString() + " " + row[1].ToString() + " " + row[2].ToString() + " " + row[3].ToString() + " " + row[4].ToString() + " " + row[7].ToString();
                             var results = DevicesGV.Rows.Cast<DataGridViewRow>()
                                           .FirstOrDefault(rvalue => rvalue.Cells[0].Value.ToString() == row[0].ToString());
 
-                            string unitstartaddress = (!string.IsNullOrEmpty(results.Cells[6].Value.ToString())) ? results.Cells[6].Value.ToString() : "null";
-                            string unitreturntype = (results.Cells[8].Value != DBNull.Value) ? results.Cells[8].Value.ToString() : "null";
+                            string unitstartaddress = (!string.IsNullOrEmpty(results.Cells[5].Value.ToString())) ? results.Cells[5].Value.ToString() : "null";
+                            string unitreturntype = (results.Cells[6].Value != DBNull.Value) ? results.Cells[6].Value.ToString() : "null";
 
-                            string alarmstartaddress = (!string.IsNullOrEmpty(results.Cells[9].Value.ToString())) ? results.Cells[9].Value.ToString() : "null";
-                            string alarmreturntype = (results.Cells[11].Value != DBNull.Value) ? results.Cells[11].Value.ToString() : "null";
+                            string alarmstartaddress = (!string.IsNullOrEmpty(results.Cells[7].Value.ToString())) ? results.Cells[7].Value.ToString() : "null";
+                            string alarmreturntype = (results.Cells[8].Value != DBNull.Value) ? results.Cells[8].Value.ToString() : "null";
 
-                            string resstartaddress = (!string.IsNullOrEmpty(results.Cells[12].Value.ToString())) ? results.Cells[12].Value.ToString() : "null";
-                            string resreturntype = (results.Cells[14].Value != DBNull.Value) ? results.Cells[14].Value.ToString() : "null";
+                            string resstartaddress = (!string.IsNullOrEmpty(results.Cells[9].Value.ToString())) ? results.Cells[9].Value.ToString() : "null";
+                            string resreturntype = (results.Cells[10].Value != DBNull.Value) ? results.Cells[10].Value.ToString() : "null";
 
-                            string alarmstatusaddress = (!string.IsNullOrEmpty(results.Cells[15].Value.ToString())) ? results.Cells[15].Value.ToString() : "null";
-                            string alarmstatusreturntype = (results.Cells[17].Value != DBNull.Value) ? results.Cells[17].Value.ToString() : "null";
+                            string alarmstatusaddress = (!string.IsNullOrEmpty(results.Cells[11].Value.ToString())) ? results.Cells[11].Value.ToString() : "null";
+                            string alarmstatusreturntype = (results.Cells[12].Value != DBNull.Value) ? results.Cells[12].Value.ToString() : "null";
+
+                            string channeladdress = (!string.IsNullOrEmpty(results.Cells[13].Value.ToString())) ? results.Cells[13].Value.ToString() : "null";
+                            string channelreturntype = (results.Cells[14].Value != DBNull.Value) ? results.Cells[14].Value.ToString() : "null";
+
+                            string minleveladdress = (!string.IsNullOrEmpty(results.Cells[15].Value.ToString())) ? results.Cells[15].Value.ToString() : "null";
+                            string minlevelreturntype = (results.Cells[16].Value != DBNull.Value) ? results.Cells[16].Value.ToString() : "null";
+
+                            string maxleveladdress = (!string.IsNullOrEmpty(results.Cells[17].Value.ToString())) ? results.Cells[17].Value.ToString() : "null";
+                            string maxlevelreturntype = (results.Cells[18].Value != DBNull.Value) ? results.Cells[18].Value.ToString() : "null";
 
                             String UpdateSQL = "Update devices set device_name ='" + results.Cells[1].Value.ToString() + "', " +
                                                 "slaveID =" + results.Cells[2].Value.ToString() +
                                                 ", value_start_address =" + results.Cells[3].Value.ToString() +
-                                                ", value_return_datatype =" + results.Cells[5].Value.ToString() +
+                                                ", value_return_datatype =" + results.Cells[4].Value.ToString() +
                                                 ", unit_start_address =" + unitstartaddress +
                                                 ", unit_return_datatype =" + unitreturntype +
                                                 ", alarm_start_address =" + alarmstartaddress +
@@ -368,13 +409,22 @@ namespace DeviceDataDisplay
                                                 ", resolution_return_datatype =" + resreturntype +
                                                 ", alarm_status_start_address=" + alarmstatusaddress +
                                                 ", alarm_status_return_datatype =" + alarmstatusreturntype +
+                                                ", channel_name_address =" + channeladdress +
+                                                ", channel_name_length =" + channelreturntype +
+                                                ", min_level_address =" + minleveladdress +
+                                                ", min_level_length =" + minlevelreturntype +
+                                                ", max_level_address =" + maxleveladdress +
+                                                ", max_level_length =" + maxlevelreturntype +
                                                 ", Endianess =" + results.Cells[19].Value.ToString() + " where deviceID = " + row[0].ToString();
 
-                            deviceUpdate.CommandType = CommandType.Text;
-                            deviceUpdate.CommandText = UpdateSQL;
-                            deviceUpdate.Connection = conn;
+                            MySqlCommand deviceUpdate = new MySqlCommand()
+                            {
+                                CommandType = CommandType.Text,
+                                CommandText = UpdateSQL,
+                                Connection = conn
+                            };
                             
-
+                            
                             deviceUpdate.ExecuteNonQuery();
                             counter =counter+ 1;
                             
@@ -383,14 +433,10 @@ namespace DeviceDataDisplay
                     }
             
                     conn.Close();
-                    refreshData();
-                    if (counter > 0)
-                    {
-                        lblDeviceDisplayStatus.Text = counter + " rows sucessfully updated";
-                        counter = 0;
-
-                    }
-                    
+                    RefreshData();
+                    //if (counter <= 0) return;
+                    lblDeviceDisplayStatus.Text = counter + " rows sucessfully updated";
+                    counter = 0;
                 }
                 catch(Exception err)
                 {
@@ -407,14 +453,15 @@ namespace DeviceDataDisplay
             
         }
 
+        /*
         private void DevicesGV_RowValidating(object sender, DataGridViewCellCancelEventArgs e)
         {
-            if(DevicesGV.CurrentRow.Cells[6].Value == null)
+            if (DevicesGV.CurrentRow.Cells[6].Value == null)
             {
                 ComboBox cmb = (ComboBox)sender;
             }
         }
-
+        */
         private void DevicesGV_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
             DevicesGV.Rows[e.RowIndex].ErrorText = "";
@@ -467,14 +514,14 @@ namespace DeviceDataDisplay
 
                 }
 
-                if (!(uniqueaddress(cellvalue, DevicesGV.Rows[e.RowIndex].Cells[6].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[12].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString())))
+                if (!(uniqueaddress(cellvalue, DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
                 {
                     DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
                     e.Cancel = true;
 
                 }
             }
-            if (DevicesGV.CurrentCell.ColumnIndex == 6 || DevicesGV.CurrentCell.ColumnIndex == 9 || DevicesGV.CurrentCell.ColumnIndex == 12 || DevicesGV.CurrentCell.ColumnIndex == 15)
+            if (DevicesGV.CurrentCell.ColumnIndex == 5 || DevicesGV.CurrentCell.ColumnIndex == 7 || DevicesGV.CurrentCell.ColumnIndex == 9 || DevicesGV.CurrentCell.ColumnIndex == 11 || DevicesGV.CurrentCell.ColumnIndex == 13 || DevicesGV.CurrentCell.ColumnIndex == 15 || DevicesGV.CurrentCell.ColumnIndex == 17)
             {
                 int outvalue = 0;
 
@@ -497,9 +544,20 @@ namespace DeviceDataDisplay
                 }
             }
 
-            if (DevicesGV.CurrentCell.ColumnIndex == 6)
+            if (DevicesGV.CurrentCell.ColumnIndex == 5)
             {
-                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[12].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString())))
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
+                {
+                    DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
+                    e.Cancel = true;
+
+                }
+
+            }
+
+            if (DevicesGV.CurrentCell.ColumnIndex == 7)
+            {
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
                 {
                     DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
                     e.Cancel = true;
@@ -510,35 +568,51 @@ namespace DeviceDataDisplay
 
             if (DevicesGV.CurrentCell.ColumnIndex == 9)
             {
-                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[6].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[12].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString())))
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
                 {
                     DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
                     e.Cancel = true;
 
                 }
-
             }
 
-            if (DevicesGV.CurrentCell.ColumnIndex == 12)
+            if (DevicesGV.CurrentCell.ColumnIndex == 11)
             {
-                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[6].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString())))
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
                 {
                     DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
                     e.Cancel = true;
 
                 }
             }
+            if (DevicesGV.CurrentCell.ColumnIndex == 13)
+            {
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
+                {
+                    DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
+                    e.Cancel = true;
 
+                }
+            }
             if (DevicesGV.CurrentCell.ColumnIndex == 15)
             {
-                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[6].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[12].Value.ToString(), cellvalue)))
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(),  DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), cellvalue, DevicesGV.Rows[e.RowIndex].Cells[17].Value.ToString())))
                 {
                     DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
                     e.Cancel = true;
 
                 }
             }
+            if (DevicesGV.CurrentCell.ColumnIndex == 17)
+            {
+                if (!(uniqueaddress(DevicesGV.Rows[e.RowIndex].Cells[3].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[5].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[7].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[9].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[11].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[13].Value.ToString(), DevicesGV.Rows[e.RowIndex].Cells[15].Value.ToString(), cellvalue)))
+                {
+                    DevicesGV.Rows[e.RowIndex].ErrorText = "Address should be unique";
+                    e.Cancel = true;
 
+                }
+            }
+            /*
             if (DevicesGV.CurrentCell.ColumnIndex == 6 && String.IsNullOrEmpty(cellvalue))
             {
                 if (DevicesGV.Rows[e.RowIndex].Cells[6].Value.ToString() != cellvalue)
@@ -613,6 +687,7 @@ namespace DeviceDataDisplay
                     DevicesGV.Rows[e.RowIndex].Cells[17].Value = 1;
                 }
             }
+            */
 
         }
 
@@ -624,15 +699,9 @@ namespace DeviceDataDisplay
             
             
         }
-
+        /*
         private void DevicesGV_RowLeave(object sender, DataGridViewCellEventArgs e)
         {
-            
-        }
-
-        private void DevicesGV_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
-        {
-            
             
         }
 
@@ -641,34 +710,17 @@ namespace DeviceDataDisplay
             MessageBox.Show("Row added");
         }
 
-        private void DevicesGV_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            
-            
-            
-        }
-
         private void DevicesGV_RowEnter(object sender, DataGridViewCellEventArgs e)
         {
-            int rows = Convert.ToInt32(DevicesGV.Rows.Count.ToString());
-            int rowindex = Convert.ToInt32(e.RowIndex);
-            if(rowindex == rows-1)
-            {
-                
-            }
 
-            
-            
         }
-
+        */
         private void btnAdd_Click(object sender, EventArgs e)
         {
             AddDevices adddevices = new AddDevices(ref DevicesGV);
             adddevices.ShowDialog();
-
-            
         }
-        private void refreshData()
+        private void RefreshData()
         {
             using (MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
             {
@@ -676,28 +728,35 @@ namespace DeviceDataDisplay
                 DevicesGV.Rows.Clear();
                 DevicesGV.Columns.Clear();
                 Connection.Open();
-                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
+                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,channel_name_address,channel_name_length,min_level_address,min_level_length,max_level_address,max_level_length,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
                 MySqlDataAdapter deviceadapter = new MySqlDataAdapter(query, Connection);
                 DataSet devicedata = new DataSet();
                 deviceadapter.Fill(devicedata, "devices");
                 tbldevices = new DataTable();
                 tbldevices = devicedata.Tables["devices"];
                 DevicesGV.DataSource = tbldevices;
+                 
                 DevicesGV.Columns["deviceID"].ReadOnly = true;
                 DevicesGV.Columns["device_name"].ReadOnly = false;
                 DevicesGV.Columns["slaveID"].ReadOnly = false;
                 DevicesGV.Columns["value_start_address"].ReadOnly = false;
-                DevicesGV.Columns["value_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["value_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["unit_start_address"].ReadOnly = false;
-                DevicesGV.Columns["unit_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["unit_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["alarm_start_address"].ReadOnly = false;
-                DevicesGV.Columns["alarm_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["alarm_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["resolution_start_address"].ReadOnly = false;
-                DevicesGV.Columns["resolution_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["resolution_return_datatype"].ReadOnly = false;
                 DevicesGV.Columns["alarm_status_start_address"].ReadOnly = false;
-                DevicesGV.Columns["alarm_status_return_datatype"].ReadOnly = true;
+                DevicesGV.Columns["alarm_status_return_datatype"].ReadOnly = false;
+                DevicesGV.Columns["channel_name_address"].ReadOnly = false;
+                DevicesGV.Columns["channel_name_length"].ReadOnly = false;
+                DevicesGV.Columns["min_level_address"].ReadOnly = false;
+                DevicesGV.Columns["min_level_length"].ReadOnly = false;
+                DevicesGV.Columns["max_level_address"].ReadOnly = false;
+                DevicesGV.Columns["max_level_length"].ReadOnly = false;
                 DevicesGV.Columns["Endianess"].ReadOnly = true;
-
+                
                 DevicesGV.Columns[0].Width = 125;
                 DevicesGV.Columns[1].Width = 150;
                 DevicesGV.Columns[1].HeaderText = "Device Name";
@@ -724,7 +783,24 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns[12].Width = 200;
                 DevicesGV.Columns[12].HeaderText = "Alarm status Datatype";
                 DevicesGV.Columns[13].Width = 150;
+                DevicesGV.Columns[13].HeaderText = "Channel Name Address";
 
+                DevicesGV.Columns[14].Width = 150;
+                DevicesGV.Columns[14].HeaderText = "Channel Length";
+
+                DevicesGV.Columns[15].Width = 150;
+                DevicesGV.Columns[15].HeaderText = "Min level address";
+
+                DevicesGV.Columns[16].Width = 150;
+                DevicesGV.Columns[16].HeaderText = "Min level length";
+
+                DevicesGV.Columns[17].Width = 150;
+                DevicesGV.Columns[17].HeaderText = "Max level address";
+
+                DevicesGV.Columns[18].Width = 150;
+                DevicesGV.Columns[18].HeaderText = "Max level length";
+
+                DevicesGV.Columns[19].Width = 150;
 
 
 
@@ -741,6 +817,7 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns[10].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[11].SortMode = DataGridViewColumnSortMode.NotSortable;
 
+                /*
                 Dictionary<int, String> modbus_return_datatypes = new Dictionary<int, string>();
                 modbus_return_datatypes.Add(1, "uinteger-16 bits");
                 modbus_return_datatypes.Add(2, "ulong-32 bits");
@@ -755,6 +832,7 @@ namespace DeviceDataDisplay
                 datatypevaluecolumn.Width = 150;
 
                 DevicesGV.Columns.Insert(4, datatypevaluecolumn);
+                
                 DevicesGV.Columns[5].Visible = false;
 
                 Dictionary<int, String> modbus_unit_alaram_res_datatypes = new Dictionary<int, string>();
@@ -800,7 +878,7 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns[14].Visible = false;
 
 
-
+                
                 DataGridViewComboBoxCell alarmstatus = new DataGridViewComboBoxCell();
                 alarmstatus.DataSource = new BindingSource(modbus_unit_alaram_res_datatypes, null);
                 alarmstatus.ValueMember = "Key";
@@ -813,7 +891,7 @@ namespace DeviceDataDisplay
                 DevicesGV.Columns.Insert(16, alarmstatusdatatypecolumn);
                 DevicesGV.Columns[17].Visible = false;
 
-
+                */
 
                 Dictionary<int, String> Endianess = new Dictionary<int, string>();
                 Endianess.Add(0, "LittleEndian");
@@ -828,11 +906,11 @@ namespace DeviceDataDisplay
                 endianessvaluecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 endianessvaluecolumn.Width = 150;
 
-                DevicesGV.Columns.Insert(18, endianessvaluecolumn);
-                DevicesGV.Columns[19].Visible = false;
+                DevicesGV.Columns.Insert(19, endianessvaluecolumn);
+                DevicesGV.Columns[20].Visible = false;
 
 
-
+                /*
 
                 foreach (DataGridViewRow item in DevicesGV.Rows)
                 {
@@ -844,15 +922,25 @@ namespace DeviceDataDisplay
                     item.Cells[18].Value = item.Cells[19].Value;
                     item.Height = 30;
                 }
+                */
+                foreach (DataGridViewRow item in DevicesGV.Rows)
+                {
+                    item.Height = 30;
+                    item.Cells[19].Value = item.Cells[20].Value;
+                }
+
+
                 DevicesGV.Columns[12].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[13].SortMode = DataGridViewColumnSortMode.NotSortable;
+
                 DevicesGV.Columns[14].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[15].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[16].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[17].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.Columns[18].SortMode = DataGridViewColumnSortMode.NotSortable;
-
+                DevicesGV.Columns[19].SortMode = DataGridViewColumnSortMode.NotSortable;
                 DevicesGV.AllowUserToAddRows = false;
+
 
             }
         }
@@ -863,7 +951,7 @@ namespace DeviceDataDisplay
             
         }
 
-        private bool uniqueaddress(string valuaddress, string unitaddress, string resolutionaddress, string alarmaddress, string alarmstatus)
+        private bool uniqueaddress(string valuaddress, string unitaddress, string resolutionaddress, string alarmaddress, string alarmstatus,string channeladdress,string minleveladdress,string maxleveladdress)
         {
             List<string> address = new List<string>();
             address.Add(valuaddress);
@@ -871,25 +959,33 @@ namespace DeviceDataDisplay
             if (unitaddress != "")
             {
                 address.Add(unitaddress);
-
             }
 
             if (resolutionaddress != "")
             {
                 address.Add(resolutionaddress);
-
             }
 
             if (alarmaddress != "")
             {
                 address.Add(alarmaddress);
-
             }
             if(alarmstatus != "")
             {
                 address.Add(alarmstatus);
             }
-
+            if (channeladdress != "")
+            {
+                address.Add(channeladdress);
+            }
+            if (minleveladdress != "")
+            {
+                address.Add(minleveladdress);
+            }
+            if (maxleveladdress != "")
+            {
+                address.Add(maxleveladdress);
+            }
             if (address.Count() > 0)
             {
                 var distinct = address.Distinct().Count();
@@ -898,7 +994,6 @@ namespace DeviceDataDisplay
 
                     return false;
                 }
-
             }
 
             return true;

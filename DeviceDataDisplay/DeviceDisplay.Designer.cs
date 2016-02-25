@@ -48,12 +48,7 @@
             this.DevicesGV.TabIndex = 0;
             this.DevicesGV.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.DevicesGV_CellLeave);
             this.DevicesGV.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.DevicesGV_CellValidating);
-            this.DevicesGV.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.DevicesGV_CellValueChanged);
             this.DevicesGV.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DevicesGV_EditingControlShowing);
-            this.DevicesGV.NewRowNeeded += new System.Windows.Forms.DataGridViewRowEventHandler(this.DevicesGV_NewRowNeeded);
-            this.DevicesGV.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.DevicesGV_RowEnter);
-            this.DevicesGV.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.DevicesGV_RowsAdded);
-            this.DevicesGV.RowValidating += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DevicesGV_RowValidating);
             // 
             // btnSave
             // 

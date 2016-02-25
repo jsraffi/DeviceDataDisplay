@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -137,7 +138,7 @@ namespace DeviceDataDisplay
                         string deviceid = cmbdevices.SelectedValue.ToString();
                         if (deviceid == "0")
                         {
-                            cmddevicesUpdate.CommandText = "Update channels set deviceRefID =" + deviceid.ToString() + ",alarmswitch = 0  where channel_no =" + channelNo + "";
+                            cmddevicesUpdate.CommandText = "Update channels set deviceRefID = 0 ,alarmswitch = 0 ,onlyminlevel = 0, onlymaxlevel = 0,alarmstatus = 0 where channel_no =" + channelNo + "";
                             cmddevicesUpdate.CommandType = CommandType.Text;
                             cmddevicesUpdate.Connection = conn;
                             conn.Open();
@@ -159,24 +160,74 @@ namespace DeviceDataDisplay
                             }
                             else
                             {
-                                string queryalarm = "select alarm_start_address from devices where deviceid = " + deviceid.ToString();
+                                string queryalarm = "select alarm_start_address,alarm_status_start_address,min_level_address,max_level_address from devices where deviceid = " + deviceid.ToString();
                                 cmddevicesUpdate.CommandText = queryalarm;
                                 cmddevicesUpdate.CommandType = CommandType.Text;
                                 cmddevicesUpdate.Connection = conn;
-                                object alarmon = cmddevicesUpdate.ExecuteScalar();
-                                if (alarmon != DBNull.Value)
+                                //object alarmon = cmddevicesUpdate.ExecuteScalar();
+                                Dictionary<string,int> deviceoptionalsettings = new Dictionary<string, int>();
+                                MySqlDataReader devicereader = cmddevicesUpdate.ExecuteReader();
+                                if (devicereader.HasRows)
                                 {
-                                    cmddevicesUpdate.CommandText = "Update channels set alarmswitch = 1 where channel_no =" + channelNo + "";
+                                    while (devicereader.Read())
+                                    {
+                                        deviceoptionalsettings.Add("AlarmAddr", (devicereader.IsDBNull(0)) ? 0: devicereader.GetUInt16(0));
+                                        deviceoptionalsettings.Add("AlarmStatusAddr", (devicereader.IsDBNull(1)) ? 0 : devicereader.GetUInt16(1));
+                                        deviceoptionalsettings.Add("MinLevelAddr", (devicereader.IsDBNull(2)) ? 0 : devicereader.GetUInt16(2));
+                                        deviceoptionalsettings.Add("MaxLevelAddr", (devicereader.IsDBNull(3)) ? 0 : devicereader.GetUInt16(3));
+                                    }
+                                }
+                                devicereader.Close();
+                                MySqlTransaction trans = conn.BeginTransaction();
+                                try
+                                {
+                                    
+                                    if (deviceoptionalsettings["AlarmAddr"] != 0)
+                                    {
+                                        cmddevicesUpdate.CommandText = "Update channels set alarmswitch = 1 where channel_no =" + channelNo ;
+                                        cmddevicesUpdate.CommandType = CommandType.Text;
+                                        cmddevicesUpdate.Connection = conn;
+                                        cmddevicesUpdate.ExecuteNonQuery();
+
+                                    }
+                                    if (deviceoptionalsettings["AlarmStatusAddr"] != 0)
+                                    {
+                                        cmddevicesUpdate.CommandText = "Update channels set alarmstatus = 1 where channel_no =" + channelNo;
+                                        cmddevicesUpdate.CommandType = CommandType.Text;
+                                        cmddevicesUpdate.Connection = conn;
+                                        cmddevicesUpdate.ExecuteNonQuery();
+
+                                    }
+                                    if (deviceoptionalsettings["MinLevelAddr"] != 0)
+                                    {
+                                        cmddevicesUpdate.CommandText = "Update channels set onlyminlevel = 1 where channel_no =" + channelNo;
+                                        cmddevicesUpdate.CommandType = CommandType.Text;
+                                        cmddevicesUpdate.Connection = conn;
+                                        cmddevicesUpdate.ExecuteNonQuery();
+                                    }
+
+                                    if (deviceoptionalsettings["MaxLevelAddr"] != 0)
+                                    {
+                                        cmddevicesUpdate.CommandText = "Update channels set onlymaxlevel = 1 where channel_no =" + channelNo ;
+                                        cmddevicesUpdate.CommandType = CommandType.Text;
+                                        cmddevicesUpdate.Connection = conn;
+                                        cmddevicesUpdate.ExecuteNonQuery();
+                                    }
+                                    cmddevicesUpdate.CommandText = "Update channels set deviceRefID =" + deviceid.ToString() + " where channel_no =" + channelNo + "";
                                     cmddevicesUpdate.CommandType = CommandType.Text;
                                     cmddevicesUpdate.Connection = conn;
                                     cmddevicesUpdate.ExecuteNonQuery();
+                                    trans.Commit();
+                                    status = "This Channel is connected to a device";
                                 }
+                                catch (Exception)
+                                {   
+                                    trans.Rollback();
+                                    status = "Unable to connect the channel to device:DB Error";
 
-                                cmddevicesUpdate.CommandText = "Update channels set deviceRefID =" + deviceid.ToString() + " where channel_no =" + channelNo + "";
-                                cmddevicesUpdate.CommandType = CommandType.Text;
-                                cmddevicesUpdate.Connection = conn;
-                                cmddevicesUpdate.ExecuteNonQuery();
-                                status = "This Channel is connected to a device";
+                                }
+                                 
+                                
                             }
                         }
                     }

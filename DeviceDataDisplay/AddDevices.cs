@@ -14,16 +14,16 @@ namespace DeviceDataDisplay
 {
     public partial class AddDevices : Form
     {
-        private DataGridView adddevicegidview;
+        private DataGridView DeviceGVRef;
         private bool validateStatus;
        
         public AddDevices()
         {
             InitializeComponent();
         }
-        public AddDevices(ref DataGridView deviceGV)
+        public AddDevices(ref DataGridView devicegv)
         {
-            adddevicegidview = deviceGV;
+            DeviceGVRef = devicegv;
             InitializeComponent();
         }
 
@@ -32,83 +32,110 @@ namespace DeviceDataDisplay
             bool savechk = SavetoDB();
             if(savechk)
             {
-                refershdata();
+                RefershData();
                 this.Close();
             }
 
         }
-        private void refershdata()
+        private void RefershData()
         {
             using (MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
             {
-                adddevicegidview.DataSource = null;
-                adddevicegidview.Rows.Clear();
-                adddevicegidview.Columns.Clear();
-                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
+                DeviceGVRef.DataSource = null;
+                DeviceGVRef.Rows.Clear();
+                DeviceGVRef.Columns.Clear();
+                Connection.Open();
+                string query = "select deviceID,device_name,slaveID,value_start_address ,value_return_datatype ,unit_start_address ,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,channel_name_address,channel_name_length,min_level_address,min_level_length,max_level_address,max_level_length,Endianess from devices"; //,alarm_status_start_address,alarm_status_return_datatype
                 MySqlDataAdapter deviceadapter = new MySqlDataAdapter(query, Connection);
                 DataSet devicedata = new DataSet();
                 deviceadapter.Fill(devicedata, "devices");
                 DataTable tbldevices = new DataTable();
                 tbldevices = devicedata.Tables["devices"];
-                adddevicegidview.DataSource = tbldevices;
-                adddevicegidview.Columns["deviceID"].ReadOnly = true;
-                adddevicegidview.Columns["device_name"].ReadOnly = false;
-                adddevicegidview.Columns["slaveID"].ReadOnly = false;
-                adddevicegidview.Columns["value_start_address"].ReadOnly = false;
-                adddevicegidview.Columns["value_return_datatype"].ReadOnly = true;
-                adddevicegidview.Columns["unit_start_address"].ReadOnly = false;
-                adddevicegidview.Columns["unit_return_datatype"].ReadOnly = true;
-                adddevicegidview.Columns["alarm_start_address"].ReadOnly = false;
-                adddevicegidview.Columns["alarm_return_datatype"].ReadOnly = true;
-                adddevicegidview.Columns["resolution_start_address"].ReadOnly = false;
-                adddevicegidview.Columns["resolution_return_datatype"].ReadOnly = true;
-                adddevicegidview.Columns["alarm_status_start_address"].ReadOnly = false;
-                adddevicegidview.Columns["alarm_status_return_datatype"].ReadOnly = true;
-                adddevicegidview.Columns["Endianess"].ReadOnly = true;
 
-                adddevicegidview.Columns[0].Width = 125;
-                adddevicegidview.Columns[1].Width = 150;
-                adddevicegidview.Columns[1].HeaderText = "Device Name";
-                adddevicegidview.Columns[2].Width = 125;
-                adddevicegidview.Columns[2].HeaderText = "SlaveID";
-                adddevicegidview.Columns[3].Width = 125;
-                adddevicegidview.Columns[3].HeaderText = "Value Address";
-                adddevicegidview.Columns[4].Width = 125;
-                adddevicegidview.Columns[4].HeaderText = "Value Datatype";
-                adddevicegidview.Columns[5].Width = 125;
-                adddevicegidview.Columns[5].HeaderText = "Unit Address";
-                adddevicegidview.Columns[6].Width = 125;
-                adddevicegidview.Columns[6].HeaderText = "Unit Datatype";
-                adddevicegidview.Columns[7].Width = 125;
-                adddevicegidview.Columns[7].HeaderText = "Alarm Address";
-                adddevicegidview.Columns[8].Width = 125;
-                adddevicegidview.Columns[8].HeaderText = "Alarm Datatype";
-                adddevicegidview.Columns[9].Width = 125;
-                adddevicegidview.Columns[9].HeaderText = "Res Address";
-                adddevicegidview.Columns[10].Width = 125;
-                adddevicegidview.Columns[10].HeaderText = "Res Datatype";
-                adddevicegidview.Columns[11].Width = 150;
-                adddevicegidview.Columns[11].HeaderText = "Alarm status address";
-                adddevicegidview.Columns[12].Width = 200;
-                adddevicegidview.Columns[12].HeaderText = "Alarm status Datatype";
-                adddevicegidview.Columns[13].Width = 150;
+                DeviceGVRef.DataSource = tbldevices;
+
+                DeviceGVRef.Columns["deviceID"].ReadOnly = true;
+                DeviceGVRef.Columns["device_name"].ReadOnly = false;
+                DeviceGVRef.Columns["slaveID"].ReadOnly = false;
+                DeviceGVRef.Columns["value_start_address"].ReadOnly = false;
+                DeviceGVRef.Columns["value_return_datatype"].ReadOnly = false;
+                DeviceGVRef.Columns["unit_start_address"].ReadOnly = false;
+                DeviceGVRef.Columns["unit_return_datatype"].ReadOnly = false;
+                DeviceGVRef.Columns["alarm_start_address"].ReadOnly = false;
+                DeviceGVRef.Columns["alarm_return_datatype"].ReadOnly = false;
+                DeviceGVRef.Columns["resolution_start_address"].ReadOnly = false;
+                DeviceGVRef.Columns["resolution_return_datatype"].ReadOnly = false;
+                DeviceGVRef.Columns["alarm_status_start_address"].ReadOnly = false;
+                DeviceGVRef.Columns["alarm_status_return_datatype"].ReadOnly = false;
+                DeviceGVRef.Columns["channel_name_address"].ReadOnly = false;
+                DeviceGVRef.Columns["channel_name_length"].ReadOnly = false;
+                DeviceGVRef.Columns["min_level_address"].ReadOnly = false;
+                DeviceGVRef.Columns["min_level_length"].ReadOnly = false;
+                DeviceGVRef.Columns["max_level_address"].ReadOnly = false;
+                DeviceGVRef.Columns["max_level_length"].ReadOnly = false;
+                DeviceGVRef.Columns["Endianess"].ReadOnly = true;
+
+                DeviceGVRef.Columns[0].Width = 125;
+                DeviceGVRef.Columns[1].Width = 150;
+                DeviceGVRef.Columns[1].HeaderText = "Device Name";
+                DeviceGVRef.Columns[2].Width = 125;
+                DeviceGVRef.Columns[2].HeaderText = "SlaveID";
+                DeviceGVRef.Columns[3].Width = 125;
+                DeviceGVRef.Columns[3].HeaderText = "Value Address";
+                DeviceGVRef.Columns[4].Width = 125;
+                DeviceGVRef.Columns[4].HeaderText = "Value Datatype";
+                DeviceGVRef.Columns[5].Width = 125;
+                DeviceGVRef.Columns[5].HeaderText = "Unit Address";
+                DeviceGVRef.Columns[6].Width = 125;
+                DeviceGVRef.Columns[6].HeaderText = "Unit Datatype";
+                DeviceGVRef.Columns[7].Width = 125;
+                DeviceGVRef.Columns[7].HeaderText = "Alarm Address";
+                DeviceGVRef.Columns[8].Width = 125;
+                DeviceGVRef.Columns[8].HeaderText = "Alarm Datatype";
+                DeviceGVRef.Columns[9].Width = 125;
+                DeviceGVRef.Columns[9].HeaderText = "Res Address";
+                DeviceGVRef.Columns[10].Width = 125;
+                DeviceGVRef.Columns[10].HeaderText = "Res Datatype";
+                DeviceGVRef.Columns[11].Width = 150;
+                DeviceGVRef.Columns[11].HeaderText = "Alarm status address";
+                DeviceGVRef.Columns[12].Width = 200;
+                DeviceGVRef.Columns[12].HeaderText = "Alarm status Datatype";
+                DeviceGVRef.Columns[13].Width = 150;
+                DeviceGVRef.Columns[13].HeaderText = "Channel Name Address";
+
+                DeviceGVRef.Columns[14].Width = 150;
+                DeviceGVRef.Columns[14].HeaderText = "Channel Length";
+
+                DeviceGVRef.Columns[15].Width = 150;
+                DeviceGVRef.Columns[15].HeaderText = "Min level address";
+
+                DeviceGVRef.Columns[16].Width = 150;
+                DeviceGVRef.Columns[16].HeaderText = "Min level length";
+
+                DeviceGVRef.Columns[17].Width = 150;
+                DeviceGVRef.Columns[17].HeaderText = "Max level address";
+
+                DeviceGVRef.Columns[18].Width = 150;
+                DeviceGVRef.Columns[18].HeaderText = "Max level length";
+
+                DeviceGVRef.Columns[19].Width = 150;
 
 
 
+                DeviceGVRef.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[2].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[4].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[5].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[6].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[7].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[8].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[9].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[10].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[11].SortMode = DataGridViewColumnSortMode.NotSortable;
 
-                adddevicegidview.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[2].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[4].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[5].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[6].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[7].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[8].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[9].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[10].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[11].SortMode = DataGridViewColumnSortMode.NotSortable;
-
+                /*
                 Dictionary<int, String> modbus_return_datatypes = new Dictionary<int, string>();
                 modbus_return_datatypes.Add(1, "uinteger-16 bits");
                 modbus_return_datatypes.Add(2, "ulong-32 bits");
@@ -122,8 +149,9 @@ namespace DeviceDataDisplay
                 datatypevaluecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 datatypevaluecolumn.Width = 150;
 
-                adddevicegidview.Columns.Insert(4, datatypevaluecolumn);
-                adddevicegidview.Columns[5].Visible = false;
+                DeviceGVRef.Columns.Insert(4, datatypevaluecolumn);
+                
+                DeviceGVRef.Columns[5].Visible = false;
 
                 Dictionary<int, String> modbus_unit_alaram_res_datatypes = new Dictionary<int, string>();
                 modbus_unit_alaram_res_datatypes.Add(1, "uinteger-16 bits");
@@ -139,8 +167,8 @@ namespace DeviceDataDisplay
                 unitdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 unitdatatypecolumn.Width = 150;
 
-                adddevicegidview.Columns.Insert(7, unitdatatypecolumn);
-                adddevicegidview.Columns[8].Visible = false;
+                DeviceGVRef.Columns.Insert(7, unitdatatypecolumn);
+                DeviceGVRef.Columns[8].Visible = false;
 
 
                 DataGridViewComboBoxCell alarmdatatypes = new DataGridViewComboBoxCell();
@@ -152,8 +180,8 @@ namespace DeviceDataDisplay
                 alarmdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 alarmdatatypecolumn.Width = 150;
 
-                adddevicegidview.Columns.Insert(10, alarmdatatypecolumn);
-                adddevicegidview.Columns[11].Visible = false;
+                DeviceGVRef.Columns.Insert(10, alarmdatatypecolumn);
+                DeviceGVRef.Columns[11].Visible = false;
 
                 DataGridViewComboBoxCell resdatatypes = new DataGridViewComboBoxCell();
                 resdatatypes.DataSource = new BindingSource(modbus_unit_alaram_res_datatypes, null);
@@ -164,11 +192,11 @@ namespace DeviceDataDisplay
                 resdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 resdatatypecolumn.Width = 150;
 
-                adddevicegidview.Columns.Insert(13, resdatatypecolumn);
-                adddevicegidview.Columns[14].Visible = false;
+                DeviceGVRef.Columns.Insert(13, resdatatypecolumn);
+                DeviceGVRef.Columns[14].Visible = false;
 
 
-
+                
                 DataGridViewComboBoxCell alarmstatus = new DataGridViewComboBoxCell();
                 alarmstatus.DataSource = new BindingSource(modbus_unit_alaram_res_datatypes, null);
                 alarmstatus.ValueMember = "Key";
@@ -178,31 +206,38 @@ namespace DeviceDataDisplay
                 alarmstatusdatatypecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
                 alarmstatusdatatypecolumn.Width = 150;
 
-                adddevicegidview.Columns.Insert(16, alarmstatusdatatypecolumn);
-                adddevicegidview.Columns[17].Visible = false;
+                DeviceGVRef.Columns.Insert(16, alarmstatusdatatypecolumn);
+                DeviceGVRef.Columns[17].Visible = false;
+
+                */
+
+                Dictionary<int, string> endianess = new Dictionary<int, string>()
+                {
+                    { 0, "LittleEndian"},
+                    {1, "BigEndian" }
+                };
+
+                DataGridViewComboBoxCell endianessvalue = new DataGridViewComboBoxCell()
+                {   
+                    DataSource = new BindingSource(endianess,null),
+                    ValueMember = "Key",
+                    DisplayMember = "Value"
+                };
+
+                DataGridViewColumn endianessvaluecolumn = new DataGridViewColumn(endianessvalue)
+                {
+                    HeaderText = "Endianess",
+                    SortMode = DataGridViewColumnSortMode.NotSortable,
+                    Width = 150
+                };
+                
+                DeviceGVRef.Columns.Insert(19, endianessvaluecolumn);
+                DeviceGVRef.Columns[20].Visible = false;
 
 
+                /*
 
-                Dictionary<int, String> Endianess = new Dictionary<int, string>();
-                Endianess.Add(0, "LittleEndian");
-                Endianess.Add(1, "BigEndian");
-
-                DataGridViewComboBoxCell endianessvalue = new DataGridViewComboBoxCell();
-                endianessvalue.DataSource = new BindingSource(Endianess, null);
-                endianessvalue.ValueMember = "Key";
-                endianessvalue.DisplayMember = "Value";
-                DataGridViewColumn endianessvaluecolumn = new DataGridViewColumn(endianessvalue);
-                endianessvaluecolumn.HeaderText = "Endianess";
-                endianessvaluecolumn.SortMode = DataGridViewColumnSortMode.NotSortable;
-                endianessvaluecolumn.Width = 150;
-
-                adddevicegidview.Columns.Insert(18, endianessvaluecolumn);
-                adddevicegidview.Columns[19].Visible = false;
-
-
-
-
-                foreach (DataGridViewRow item in adddevicegidview.Rows)
+                foreach (DataGridViewRow item in DeviceGVRef.Rows)
                 {
                     item.Cells[4].Value = item.Cells[5].Value;
                     item.Cells[7].Value = item.Cells[8].Value;
@@ -212,19 +247,30 @@ namespace DeviceDataDisplay
                     item.Cells[18].Value = item.Cells[19].Value;
                     item.Height = 30;
                 }
-                adddevicegidview.Columns[12].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[13].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[14].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[15].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[16].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[17].SortMode = DataGridViewColumnSortMode.NotSortable;
-                adddevicegidview.Columns[18].SortMode = DataGridViewColumnSortMode.NotSortable;
+                */
+                foreach (DataGridViewRow item in DeviceGVRef.Rows)
+                {
+                    item.Height = 30;
+                    item.Cells[19].Value = item.Cells[20].Value;
+                }
 
-                adddevicegidview.AllowUserToAddRows = false;
+
+                DeviceGVRef.Columns[12].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[13].SortMode = DataGridViewColumnSortMode.NotSortable;
+
+                DeviceGVRef.Columns[14].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[15].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[16].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[17].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[18].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.Columns[19].SortMode = DataGridViewColumnSortMode.NotSortable;
+                DeviceGVRef.AllowUserToAddRows = false;
+
+
             }
 
-               
-   }
+
+        }
         
         private bool SavetoDB()
         {   
@@ -234,36 +280,51 @@ namespace DeviceDataDisplay
                 {
                     return false;
                 }
-                using (MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
+                using (MySqlConnection connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
                 {
                     string unitaddress = (txtUnitAddress.Text != "") ? txtUnitAddress.Text : "null";
-                    string unitdatatype = (cmbUnitDatatype.SelectedValue.ToString() == "100")?"null": cmbUnitDatatype.SelectedValue.ToString();
+                    string unitdatatype = (txtUnitsLength.Text != "") ? txtUnitsLength.Text : "null";
 
                     string alarmaddress = (txtAlarmAddress.Text != "") ? txtAlarmAddress.Text : "null";
-                    string alarmdatatype = (cmbAlarmDatatype.SelectedValue.ToString() == "100") ? "null" : cmbAlarmDatatype.SelectedValue.ToString();
+                    string alarmdatatype = (txtAlarmLength.Text != "") ? txtAlarmLength.Text : "null";
 
                     string resaddress = (txtResolutionAddress.Text != "") ? txtResolutionAddress.Text : "null";
-                    string resdatatype = (cmbResolutionDatatype.SelectedValue.ToString() == "100") ? "null" : cmbResolutionDatatype.SelectedValue.ToString();
+                    string resdatatype = (txtResLength.Text != "") ? txtResLength.Text : "null";
 
                     string alarmstatusaddress = (txtAlarmStatus.Text != "") ? txtAlarmStatus.Text : "null";
-                    string alarmstatusdatatype = (cmbAlarmStatus.SelectedValue.ToString() == "100") ? "null" : cmbAlarmStatus.SelectedValue.ToString();
+                    string alarmstatusdatatype = (txtAlarmStatusLength.Text != "") ? txtAlarmStatusLength.Text : "null";
 
+                    string channelnameaddress = (txtChannelNameAddr.Text != "") ? txtChannelNameAddr.Text : "null";
+                    string channellength = (txtChannelNameLength.Text != "") ? txtChannelNameLength.Text : "null";
+
+                    string maxleveladdress = (txtMaxLevelAddr.Text != "") ? txtMaxLevelAddr.Text : "null";
+                    string maxlevellength = (txtMaxLevelLength.Text != "") ? txtMaxLevelLength.Text : "null";
+
+                    string minlevelhaddress = (txtMinLevelAddr.Text != "") ? txtMinLevelAddr.Text : "null";
+                    string minlevellength = (txtMinLevelLength.Text != "") ? txtMinLevelLength.Text : "null";
+               
                     string SQL = "Insert into devices(device_name, slaveID, value_start_address, value_return_datatype," +
                                  "unit_start_address, unit_return_datatype, alarm_start_address, alarm_return_datatype," +
-                                  "resolution_start_address, resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,Endianess)" +
+                                  "resolution_start_address, resolution_return_datatype,alarm_status_start_address,alarm_status_return_datatype,channel_name_address,channel_name_length,min_level_address,min_level_length,max_level_address,max_level_length,Endianess)" +
                                   "Values('" + txtDeviceName.Text + "'," + txtSlaveID.Text +
-                                  "," + txtValueAddress.Text + "," + cmbValueDatatype.SelectedValue +
+                                  "," + txtValueAddress.Text + "," + txtValueLength.Text +
                                   "," + unitaddress + "," + unitdatatype +
                                   "," + alarmaddress+ "," + alarmdatatype+
                                   "," + resaddress + ","+ resdatatype +
                                   "," + alarmstatusaddress + "," + alarmstatusdatatype +
+                                  "," + channelnameaddress + "," + channellength +
+                                  "," + minlevelhaddress + "," + minlevellength +
+                                  "," + maxleveladdress + "," + maxlevellength +
                                   "," + cmbEndianess.SelectedValue + ")";
 
-                    MySqlCommand cmdadddevice = new MySqlCommand();
-                    cmdadddevice.CommandType = CommandType.Text;
-                    cmdadddevice.CommandText = SQL;
-                    cmdadddevice.Connection = Connection;
-                    Connection.Open();
+                    MySqlCommand cmdadddevice = new MySqlCommand()
+                    {
+                        CommandType = CommandType.Text,
+                        CommandText = SQL,
+                        Connection = connection
+                    };
+                    
+                    connection.Open();
                     cmdadddevice.ExecuteNonQuery();
                     return true;
                 }
@@ -275,9 +336,9 @@ namespace DeviceDataDisplay
             }
 
         }
-        private Boolean validate_form()
+        private bool validate_form()
         {
-            int outvalue = 0;
+            int outvalue;
             if(txtDeviceName.Text == "")
             {
                 txtDeviceName.Focus();
@@ -296,14 +357,14 @@ namespace DeviceDataDisplay
             else if (outvalue <= 0 || outvalue > 247)
             {
                 txtSlaveID.Focus();
-                lblStatus.Text = "Please enter a value between 0 and 247";
+                lblStatus.Text = "Please enter a slaveid value between 0 and 247";
                 validateStatus = false;
                 return false;
             }
             if (!(int.TryParse(txtValueAddress.Text, out outvalue)))
             {
                 txtValueAddress.Focus();
-                lblStatus.Text = "value address id required and should be numeric";
+                lblStatus.Text = "value address required and should be numeric";
                 validateStatus = false;
                 return false;
             }
@@ -315,10 +376,26 @@ namespace DeviceDataDisplay
                 return false;
 
             }
-            if((txtUnitAddress.Text =="") ^ (cmbUnitDatatype.Text == ""))
+
+            if (!(int.TryParse(txtValueLength.Text, out outvalue)))
+            {
+                txtValueLength.Focus();
+                lblStatus.Text = "Value length required and should be numeric";
+                validateStatus = false;
+                return false;
+            }
+            else if (outvalue < 0 || outvalue > 9999)
+            {
+                txtValueLength.Focus();
+                lblStatus.Text = "value length is between 0 and 9999";
+                validateStatus = false;
+                return false;
+
+            }
+            if ((txtUnitAddress.Text =="") ^ (txtUnitsLength.Text == ""))
             {
                 txtUnitAddress.Focus();
-                lblStatus.Text = "Both unit address & unit datatype is required else both are not required";
+                lblStatus.Text = "Please enter values for both unit address and unit length or leave both blank";
                 validateStatus = false;
                 return false;
             }
@@ -340,12 +417,28 @@ namespace DeviceDataDisplay
                     return false;
 
                 }
+                if (!(int.TryParse(txtUnitsLength.Text, out outvalue)))
+                {
+                    txtUnitsLength.Focus();
+                    lblStatus.Text = "Unit length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtUnitsLength.Focus();
+                    lblStatus.Text = "Unit length should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
             }
 
-            if ((txtResolutionAddress.Text == "") ^ (cmbResolutionDatatype.Text == ""))
+            if ((txtResolutionAddress.Text == "") ^ (txtResLength.Text == ""))
             {
                 txtResolutionAddress.Focus();
-                lblStatus.Text = "Both resolution address & resolution datatype is required else both are not required";
+                lblStatus.Text = "Please enter values for both resolution address and resolution length or leave both blank";
                 validateStatus = false;
                 return false;
             }
@@ -367,12 +460,29 @@ namespace DeviceDataDisplay
                     return false;
 
                 }
+
+                if (!(int.TryParse(txtResLength.Text, out outvalue)))
+                {
+                    txtResLength.Focus();
+                    lblStatus.Text = "Resolution length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtResLength.Focus();
+                    lblStatus.Text = "Resolution length should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
             }
 
-            if ((txtAlarmAddress.Text == "") ^ (cmbAlarmDatatype.Text == ""))
+            if ((txtAlarmAddress.Text == "") ^ (txtAlarmLength.Text == ""))
             {
                 txtAlarmAddress.Focus();
-                lblStatus.Text = "Both alarm address & alarm datatype is required else both are not required";
+                lblStatus.Text = "Please enter values for both Alarm address and Alarm length or leave both blank";
                 validateStatus = false;
                 return false;
             }
@@ -394,11 +504,27 @@ namespace DeviceDataDisplay
                     return false;
 
                 }
+                if (!(int.TryParse(txtAlarmLength.Text, out outvalue)))
+                {
+                    txtAlarmLength.Focus();
+                    lblStatus.Text = "Alarm length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtAlarmLength.Focus();
+                    lblStatus.Text = "Alarm length should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
             }
-            if ((txtAlarmStatus.Text == "") ^ (cmbAlarmStatus.Text == ""))
+            if ((txtAlarmStatus.Text == "") ^ (txtAlarmStatusLength.Text == ""))
             {
                 txtAlarmStatus.Focus();
-                lblStatus.Text = "Both Alarm status address & Alarm Status datatype is required else both are not required";
+                lblStatus.Text = "Please enter values for both Alarm status address and Alarm status length or leave both blank";
                 validateStatus = false;
                 return false;
             }
@@ -415,13 +541,156 @@ namespace DeviceDataDisplay
                 if (outvalue < 0 || outvalue > 9999)
                 {
                     txtAlarmStatus.Focus();
-                    lblStatus.Text = "Alarm status should be between 0 and 9999";
+                    lblStatus.Text = "Alarm status address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+
+                }
+                if (!(int.TryParse(txtAlarmStatusLength.Text, out outvalue)))
+                {
+                    txtAlarmStatusLength.Focus();
+                    lblStatus.Text = "Alarm status length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtAlarmStatusLength.Focus();
+                    lblStatus.Text = "Alarm status length should be between 0 and 9999";
                     validateStatus = false;
                     return false;
 
                 }
             }
-            List<string> address = new List<string>();
+
+            if ((txtChannelNameAddr.Text == "") ^ (txtChannelNameLength.Text == ""))
+            {
+                txtChannelNameAddr.Focus();
+                lblStatus.Text = "Please enter values for both channel address and channel length or leave both blank";
+                validateStatus = false;
+                return false;
+            }
+            else if (txtChannelNameAddr.Text != "")
+            {
+                if (!(int.TryParse(txtChannelNameAddr.Text, out outvalue)))
+                {
+                    txtChannelNameAddr.Focus();
+                    lblStatus.Text = "Channel name address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtChannelNameAddr.Focus();
+                    lblStatus.Text = "Channel name address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (!(int.TryParse(txtChannelNameLength.Text, out outvalue)))
+                {
+                    txtChannelNameLength.Focus();
+                    lblStatus.Text = "Channel name length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtChannelNameLength.Focus();
+                    lblStatus.Text = "Channel name length should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+                }
+            }
+
+            if ((txtMaxLevelAddr.Text == "") ^ (txtMaxLevelLength.Text == ""))
+            {
+                txtMaxLevelAddr.Focus();
+                lblStatus.Text = "Please enter values for both max level address and max level length or leave both blank";
+                validateStatus = false;
+                return false;
+            }
+            else if (txtMaxLevelAddr.Text != "")
+            {
+                if (!(int.TryParse(txtMaxLevelAddr.Text, out outvalue)))
+                {
+                    txtMaxLevelAddr.Focus();
+                    lblStatus.Text = "Max level address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtMaxLevelAddr.Focus();
+                    lblStatus.Text = "Max level address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (!(int.TryParse(txtMaxLevelLength.Text, out outvalue)))
+                {
+                    txtMaxLevelLength.Focus();
+                    lblStatus.Text = "Max level length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtMaxLevelLength.Focus();
+                    lblStatus.Text = "Max level length should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+                }
+
+            }
+            if ((txtMinLevelAddr.Text == "") ^ (txtMinLevelLength.Text == ""))
+            {
+                txtMinLevelAddr.Focus();
+                lblStatus.Text = "Please enter values for both Min level address and Min level length or leave both blank";
+                validateStatus = false;
+                return false;
+            }
+            else if (txtMaxLevelAddr.Text != "")
+            {
+                if (!(int.TryParse(txtMinLevelAddr.Text, out outvalue)))
+                {
+                    txtMinLevelAddr.Focus();
+                    lblStatus.Text = "Min level address should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtMinLevelAddr.Focus();
+                    lblStatus.Text = "Min level address should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (!(int.TryParse(txtMinLevelLength.Text, out outvalue)))
+                {
+                    txtMinLevelLength.Focus();
+                    lblStatus.Text = "Min level length should be numeric";
+                    validateStatus = false;
+                    return false;
+                }
+
+                if (outvalue < 0 || outvalue > 9999)
+                {
+                    txtMinLevelLength.Focus();
+                    lblStatus.Text = "Min level length should be between 0 and 9999";
+                    validateStatus = false;
+                    return false;
+                }
+
+            }
+            var address = new List<string>();
             address.Add(txtValueAddress.Text);
                
             if(txtUnitAddress.Text != "")
@@ -439,13 +708,23 @@ namespace DeviceDataDisplay
             if (txtAlarmAddress.Text != "")
             {
                 address.Add(txtAlarmAddress.Text);
-                    
             }
             if(txtAlarmStatus.Text != "")
             {
                 address.Add(txtAlarmStatus.Text);
             }
-            
+            if (txtChannelNameAddr.Text != "")
+            {
+                address.Add(txtChannelNameAddr.Text);
+            }
+            if (txtMaxLevelAddr.Text != "")
+            {
+                address.Add(txtMaxLevelAddr.Text);
+            }
+            if (txtMinLevelAddr.Text != "")
+            {
+                address.Add(txtMinLevelAddr.Text);
+            }
             if(address.Count() > 0)
             {
                 var distinct = address.Distinct().Count();
@@ -462,6 +741,7 @@ namespace DeviceDataDisplay
         }
         private void AddDevices_Load(object sender, EventArgs e)
         {
+            /*
             List<Datatypes> vdatatypes = new List<Datatypes>()
             {
                 new Datatypes { valueIndex=1, valueDatatype ="UInteger 16bit" },
@@ -491,11 +771,13 @@ namespace DeviceDataDisplay
                 //new Datatypes { valueIndex=2, valueDatatype ="Ulong 32bit" },
                 new Datatypes { valueIndex=100, valueDatatype ="" }
             };
-            List<Datatypes> Endianessvalues = new List<Datatypes>()
+            */
+            List<Datatypes> endianessvalues = new List<Datatypes>()
             {
-                new Datatypes { valueIndex=0, valueDatatype ="Little Endian" },
-                new Datatypes { valueIndex=1, valueDatatype ="Big Endian" }
+                new Datatypes(0, "Little Endian"),
+                new Datatypes(1, "Big Endian")
             };
+            /*
             cmbValueDatatype.DataSource = vdatatypes;
             cmbValueDatatype.ValueMember = "valueIndex";
             cmbValueDatatype.DisplayMember = "valueDatatype";
@@ -514,13 +796,14 @@ namespace DeviceDataDisplay
             cmbResolutionDatatype.DisplayMember = "valueDatatype";
             cmbResolutionDatatype.SelectedIndex = cmbResolutionDatatype.FindStringExact("");
             cmbResolutionDatatype.DropDownStyle = ComboBoxStyle.DropDownList;
+            */
 
-
-            cmbEndianess.DataSource = Endianessvalues;
-            cmbEndianess.ValueMember = "valueIndex";
-            cmbEndianess.DisplayMember = "valueDatatype";
+            cmbEndianess.DataSource = endianessvalues;
+            cmbEndianess.ValueMember = "ValueIndex";
+            cmbEndianess.DisplayMember = "ValueDatatype";
             cmbEndianess.DropDownStyle = ComboBoxStyle.DropDownList;
 
+            /*
             cmbAlarmDatatype.DataSource = alarmdatatypes;
             cmbAlarmDatatype.ValueMember = "valueIndex";
             cmbAlarmDatatype.DisplayMember = "valueDatatype";
@@ -532,12 +815,18 @@ namespace DeviceDataDisplay
             cmbAlarmStatus.DisplayMember = "valueDatatype";
             cmbAlarmStatus.SelectedIndex = cmbAlarmDatatype.FindStringExact("");
             cmbAlarmStatus.DropDownStyle = ComboBoxStyle.DropDownList;
+            */
         }
-        private class Datatypes
+        internal class Datatypes
         {
-            public int valueIndex { get; set; }
+            public Datatypes(int valuindex,string valuedatatype)
+            {
+                ValueDatatype = valuedatatype;
+                ValueIndex = valuindex;
+            }
+            public int ValueIndex { get; set; }
 
-            public string valueDatatype { get; set; }
+            public string ValueDatatype { get; set; }
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)

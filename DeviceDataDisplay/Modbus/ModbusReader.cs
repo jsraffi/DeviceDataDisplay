@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Drawing.Text;
 using System.IO.Ports;
 
 namespace DeviceDataDisplay.Modbus
@@ -27,7 +28,8 @@ namespace DeviceDataDisplay.Modbus
             IntervalBetweenCommands = intervalbetweencommands;
             
         }
-        public string AlarmMode { get; set; }
+
+        public string AlarmMode { get; set; } = "";
 
         public string value_resolution_units { get; set; }
 
@@ -38,6 +40,8 @@ namespace DeviceDataDisplay.Modbus
         public bool AlarmOn { get; set; }
 
         public int Channelid { get; set; }
+
+        public string ChannelName { get; set; } = "";
 
         public bool AlarmStatus { get; set; } 
 
@@ -50,6 +54,10 @@ namespace DeviceDataDisplay.Modbus
         public bool IsIntialzeDB { get; set; } = false;
 
         public int IntervalBetweenCommands { get; set; }
+
+        public int MinLevelValue { get; set; } = 0;
+
+        public int MaxLevelValue { get; set; } = 0;
         
         public bool IntializeDB()
         {
@@ -72,7 +80,7 @@ namespace DeviceDataDisplay.Modbus
                 }
 
                 //get the device setting for channel1
-                string query = "Select deviceID,device_name,slaveID,value_start_address,value_return_datatype,unit_start_address,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,Endianess,alarm_status_start_address,alarm_status_return_datatype from devices where deviceID =" + deviceID;
+                string query = "Select deviceID,device_name,slaveID,value_start_address,value_return_datatype,unit_start_address,unit_return_datatype,alarm_start_address,alarm_return_datatype,resolution_start_address,resolution_return_datatype,Endianess,alarm_status_start_address,alarm_status_return_datatype,channel_name_address,channel_name_length,min_level_address,min_level_length,max_level_address,max_level_length from devices where deviceID =" + deviceID;
                 getdevice.CommandText = query;
                 getdevice.Connection = Connection1;
                 MySqlDataReader devicereader = getdevice.ExecuteReader();
@@ -108,6 +116,19 @@ namespace DeviceDataDisplay.Modbus
                         devicevalues1.Add((!(devicereader.IsDBNull(12)) ? devicereader.GetUInt16(12) : Convert.ToUInt16(60000)));
                         /* 12 alarm_status_return_datatype */
                         devicevalues1.Add((!(devicereader.IsDBNull(13)) ? devicereader.GetUInt16(13) : Convert.ToUInt16(60000)));
+                        /* 13 Channel_name_start_address */
+                        devicevalues1.Add((!(devicereader.IsDBNull(14)) ? devicereader.GetUInt16(14) : Convert.ToUInt16(60000)));
+                        /* 14 Channel_name_length */
+                        devicevalues1.Add((!(devicereader.IsDBNull(15)) ? devicereader.GetUInt16(15) : Convert.ToUInt16(60000)));
+                        /* 15 min level start address */
+                        devicevalues1.Add((!(devicereader.IsDBNull(16)) ? devicereader.GetUInt16(16) : Convert.ToUInt16(60000)));
+                        /* 16 min level length */
+                        devicevalues1.Add((!(devicereader.IsDBNull(17)) ? devicereader.GetUInt16(17) : Convert.ToUInt16(60000)));
+                        /* 17 max level start address */
+                        devicevalues1.Add((!(devicereader.IsDBNull(18)) ? devicereader.GetUInt16(18) : Convert.ToUInt16(60000)));
+                        /* 18 max level length */
+                        devicevalues1.Add((!(devicereader.IsDBNull(19)) ? devicereader.GetUInt16(19) : Convert.ToUInt16(60000)));
+
                     }
                 }
 
@@ -125,19 +146,40 @@ namespace DeviceDataDisplay.Modbus
                 //has been commented
                 if (devicevalues1[4] != 60000)
                 {
-                    //get unit value for the device from db after querying the device
-                    ushort[] unit_index = new ushort[devicevalues1[5]];
+                    if (devicevalues1[5] == 1)
+                    {
+                        //get unit value for the device from db after querying the device
+                        ushort[] unit_index = new ushort[devicevalues1[5]];
 
-                    //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
-                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unit_index);
-                    Thread.Sleep(IntervalBetweenCommands);
-                    
-                    var queryunits = "Select units_value from device_units where deviceID=" + deviceID + " and units_index = " + unit_index[0];
-                    getdevice.CommandText = queryunits;
-                    getdevice.Connection = Connection1;
-                    object units = getdevice.ExecuteScalar();
-                    Units = (units != DBNull.Value) ? units.ToString() : "";
-                    
+                        //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unit_index);
+                        Thread.Sleep(IntervalBetweenCommands);
+
+                        var queryunits = "Select units_value from device_units where deviceID=" + deviceID +
+                                         " and units_index = " + unit_index[0];
+                        getdevice.CommandText = queryunits;
+                        getdevice.Connection = Connection1;
+                        object units = getdevice.ExecuteScalar();
+                        Units = (units != DBNull.Value) ? units.ToString() : "";
+                    }
+                    else if (devicevalues1[5] > 1)
+                    {
+                        ushort[] unitascii= new ushort[devicevalues1[5]];
+
+                        //address 1 denotess slaveid,address4=units start address,address5=unints return datatypes
+                        mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[4], devicevalues1[5], ref unitascii);
+                        Thread.Sleep(IntervalBetweenCommands);
+
+                        string unitschar = "";
+                        
+                        for (var i = 0; i <= devicevalues1[5]-1; i++)
+                        {
+                            unitschar = unitschar + (char) unitascii[i];
+                        }
+                        
+                        Units = unitschar;
+
+                    }
                     /*
                     Revision for once read above
                     MySqlDataReader unitReader = getdevice.ExecuteReader();
@@ -152,6 +194,19 @@ namespace DeviceDataDisplay.Modbus
                     unitReader.Close();
                     */
                 }
+                else
+                {
+                    var queryunits ="select um.units from unitsofmesurement um inner join channels ch on ch.units = um.unitId where ch.channel_no =" + Channelid;
+                    getdevice.CommandText = queryunits;
+                    getdevice.Connection = Connection1;
+                    object units = getdevice.ExecuteScalar();
+                    if (units.ToString() != "No-Units" && units != DBNull.Value)
+                    {
+                        Units = units.ToString();
+                    }
+                    
+
+                }
                 //get alarm defination from db and load it in to dictionary
                 if (devicevalues1[6] != 60000)
                 {
@@ -165,7 +220,7 @@ namespace DeviceDataDisplay.Modbus
 
                     object alarmmode= getdevice.ExecuteScalar();
                     AlarmMode = (alarmmode != DBNull.Value) ? alarmmode.ToString() : "";
-                    AlarmOn = true;
+                    //AlarmOn = true;
                     /*
                     MySqlDataReader alarmReader = getdevice.ExecuteReader();
 
@@ -211,6 +266,42 @@ namespace DeviceDataDisplay.Modbus
                         resolutionReader.Close();
                         */
                 }
+                if (devicevalues1[11] != 60000)
+                {
+                    ushort[] alarmstatus = new ushort[devicevalues1[12]];
+
+                    //address 1 denotess slaveid,address13=channel_name start address,address14= no fo return values
+                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[11], devicevalues1[12], ref alarmstatus);
+                    Thread.Sleep(IntervalBetweenCommands);
+                   
+                    AlarmStatus = (alarmstatus[0] == 1);
+                    AlarmOn = true;
+                }
+                if (devicevalues1[13] != 60000)
+                {
+                    ushort[] channelname = new ushort[devicevalues1[14]];
+
+                    //address 1 denotess slaveid,address13=channel_name start address,address14= no fo return values
+                    mb.SendFc3(Convert.ToByte(devicevalues1[1]), devicevalues1[13], devicevalues1[14], ref channelname);
+                    Thread.Sleep(IntervalBetweenCommands);
+
+                    string channelnamechar = "";
+
+                    for (var i = 0; i <= devicevalues1[14] - 1; i++)
+                    {
+                        channelnamechar = channelnamechar + (char)channelname[i];
+                    }
+                    ChannelName = channelnamechar;
+
+                }
+                if (devicevalues1[15] != 60000)
+                {
+                    MinLevelValue = GetShiftedValues(devicevalues1[15], devicevalues1[16], devicevalues1[10]);
+                }
+                if (devicevalues1[17] != 60000)
+                {
+                    MaxLevelValue = GetShiftedValues(devicevalues1[17], devicevalues1[18], devicevalues1[10]);
+                }
                 IsIntialzeDB = true;
                 return true;
 
@@ -220,6 +311,48 @@ namespace DeviceDataDisplay.Modbus
                 DBError = "DB Error";
                 throw;
             }
+        }
+
+        private int GetShiftedValues(ushort startaddress, ushort length, int endianess)
+        {
+            int intValue = 0;
+            if (length == 2)
+            {
+                ushort[] minlevelvalue = new ushort[length];
+                mb.SendFc3(Convert.ToByte(devicevalues1[1]), startaddress, length, ref minlevelvalue);
+                //concat two 16 bit values using loop
+                //devicevalues1[10] holds the value for endianess 0=little endian and 1 = big endian
+
+                if (endianess == 0)
+                {
+                    for (int i = 0; i < length / 2; i++)
+                    {
+                        intValue = minlevelvalue[2 * i];
+                        intValue <<= 16;
+                        intValue += minlevelvalue[2 * i + 1];//for little endian
+                    }
+                }
+                else if (endianess == 1)
+                {
+                    for (int i = 0; i < length / 2; i++)
+                    {
+                        intValue = minlevelvalue[2 * i + 1];
+                        intValue <<= 16;
+                        intValue += minlevelvalue[2 * i];//for big endian 
+                    }
+
+                }
+                Thread.Sleep(IntervalBetweenCommands);
+            }
+            else if (length == 1)// if meter value return datatype is ushort or integer(C) no need shift it is only 16bit value
+            {
+                ushort[] minlevelvalue = new ushort[length];
+                mb.SendFc3(Convert.ToByte(devicevalues1[1]), startaddress, length, ref minlevelvalue);
+                intValue = (int)minlevelvalue[0];
+                Thread.Sleep(IntervalBetweenCommands);
+
+            }
+            return intValue;
         }
      public void ReadDevice()
      {
