@@ -252,6 +252,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MySQLBackup\datalogger-11-feb-2016.sql" />
+    <Content Include="MySQLBackup\datalogger-25-feb-2016.sql" />
     <Content Include="MySQLBackup\datalogger06-01-2016.sql" />
   </ItemGroup>
   <ItemGroup />
