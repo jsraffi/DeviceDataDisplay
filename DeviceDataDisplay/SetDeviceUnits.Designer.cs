@@ -47,6 +47,7 @@
             this.DeviceUnits.RowTemplate.Height = 24;
             this.DeviceUnits.Size = new System.Drawing.Size(720, 510);
             this.DeviceUnits.TabIndex = 0;
+            this.DeviceUnits.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DeviceUnits_CellContentClick);
             this.DeviceUnits.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.DeviceUnits_CellLeave);
             this.DeviceUnits.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DeviceUnits_EditingControlShowing);
             // 

@@ -242,5 +242,10 @@ namespace DeviceDataDisplay
                 cmbdevices.SelectedIndexChanged -= new EventHandler(devices_SelectedIndexChanged);
             }
         }
+
+        private void DeviceMapGV_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }

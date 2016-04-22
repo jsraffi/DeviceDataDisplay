@@ -62,6 +62,9 @@
   <PropertyGroup>
     <SignManifests>true</SignManifests>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>DeviceDataDisplay.Program</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="MySql.Data, Version=6.9.8.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -130,6 +133,12 @@
     </Compile>
     <Compile Include="Modbus\modbus.cs" />
     <Compile Include="Modbus\ModbusReader.cs" />
+    <Compile Include="NetworkSetting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NetworkSetting.Designer.cs">
+      <DependentUpon>NetworkSetting.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pollsetting.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -192,6 +201,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="MapDevicesToChannels.resx">
       <DependentUpon>MapDevicesToChannels.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NetworkSetting.resx">
+      <DependentUpon>NetworkSetting.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pollsetting.resx">
       <DependentUpon>Pollsetting.cs</DependentUpon>

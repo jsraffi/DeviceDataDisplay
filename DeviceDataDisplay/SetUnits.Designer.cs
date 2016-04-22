@@ -42,6 +42,7 @@
             this.ChannelsGV.RowTemplate.Height = 24;
             this.ChannelsGV.Size = new System.Drawing.Size(527, 518);
             this.ChannelsGV.TabIndex = 0;
+            this.ChannelsGV.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.ChannelsGV_CellContentClick);
             this.ChannelsGV.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.ChannelsGV_EditingControlShowing);
             // 
             // Save

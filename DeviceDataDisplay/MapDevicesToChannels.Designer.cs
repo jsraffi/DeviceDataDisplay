@@ -44,6 +44,7 @@
             this.DeviceMapGV.RowTemplate.Height = 24;
             this.DeviceMapGV.Size = new System.Drawing.Size(854, 530);
             this.DeviceMapGV.TabIndex = 0;
+            this.DeviceMapGV.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DeviceMapGV_CellContentClick);
             this.DeviceMapGV.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DeviceMapGV_EditingControlShowing);
             // 
             // statusStripMapDevices
@@ -62,7 +63,7 @@
             // 
             this.lblDeviceMapStatus.ForeColor = System.Drawing.Color.Red;
             this.lblDeviceMapStatus.Name = "lblDeviceMapStatus";
-            this.lblDeviceMapStatus.Size = new System.Drawing.Size(0, 19);
+            this.lblDeviceMapStatus.Size = new System.Drawing.Size(0, 17);
             // 
             // MapDevicesToChannels
             // 

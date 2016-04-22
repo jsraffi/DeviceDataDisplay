@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using System.Configuration;
+using System.Diagnostics;
 using System.Threading;
 using DeviceDataDisplay.Modbus;
 using System.IO.Ports;
@@ -34,6 +35,8 @@ namespace DeviceDataDisplay
         Dictionary<ushort, string> deviceunits1 = new Dictionary<ushort, string>();
         Dictionary<ushort, string> devicealarm1 = new Dictionary<ushort, string>();
 
+        private Dictionary<string, string> colorsetting = new Dictionary<string, string>();
+
         string lastdisplayedvalue;
         string lastdisplayedvalue1;
         string lastdisplayedvalue2;
@@ -53,8 +56,16 @@ namespace DeviceDataDisplay
         int baudrate;
         int firstdisplayloadtimeMS;
         int timeintervalbetweencommandMS;
+        private int logintervalinminutes;
+
+        private DateTime ApplicationStartTimeForLog;
+        private string LogChannelValues;
+        private string LogChannelNames;
+
+        private bool loaded = false;
         
-        
+
+
         public DeviceDataDisplay()
         {
             InitializeComponent();
@@ -68,11 +79,69 @@ namespace DeviceDataDisplay
             
             ShowChannels.Items.AddRange(channels);
 
+            getColorSetting();
+
             getPollSetting();
 
-            ChannelSetting();
+            //ChannelSetting();
+
+            ChannelStartUp();
+
+            ApplicationStartTimeForLog =DateTime.Now;
+
+           AfterLoading();
         }
 
+        private async void AfterLoading()
+        {   
+             await Task.Delay(20000);
+            ShowChannels.SelectedIndex = 9;
+            poller.PerformClick();
+
+        }
+        private void getColorSetting()
+        {
+            try
+            {
+                using (
+                MySqlConnection Connection = new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"])
+                )
+                {
+                    Connection.Open();
+                    string query = "Select * from coloursetting";
+
+                    MySqlCommand command = new MySqlCommand(query, Connection);
+
+                    MySqlDataReader reader = command.ExecuteReader();
+                    
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            colorsetting.Add("panelcolour",reader.GetString(1));
+                            colorsetting.Add("panelbordercolour", reader.GetString(2));
+                            colorsetting.Add("valuecolour", reader.GetString(3));
+                            colorsetting.Add("channelnamecolour", reader.GetString(4));
+                            colorsetting.Add("setpointcolour", reader.GetString(5));
+                        }
+                    }
+
+                    
+
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+
+            
+
+            
+        }
         public void getPollSetting()
         {
 
@@ -90,33 +159,14 @@ namespace DeviceDataDisplay
                 baudrate = tblpoll_setting.Rows[0].Field<int>("baud_rate");
                 firstdisplayloadtimeMS = tblpoll_setting.Rows[0].Field<int>("poll_interval");
                 timeintervalbetweencommandMS = tblpoll_setting.Rows[0].Field<int>("command_interval");
+                logintervalinminutes = tblpoll_setting.Rows[0].Field<int>("log_interval");
 
             }
         }
 
         private void pollingCallBack(object state)
         {   
-            //if(CurrentNoOfChannelSelected ==1)
-            //{         
-            //    if(firstcalltopolling)
-            //    {
-            //        channel1reader = new ModbusReader(1, sp);
-            //        firstcalltopolling = false;
-            //    }
-            //    UpdateChannel(channel1reader, "Channel1");
-            //}
-            //if(CurrentNoOfChannelSelected ==2)
-            //{
-            //    if (firstcalltopolling)
-            //    {
-            //        channel1reader = new ModbusReader(1, sp);
-            //        channel2reader = new ModbusReader(2, sp);
-            //        firstcalltopolling = false;
-            //    }
-            //    UpdateChannel(channel1reader, "Channel1");
-            //    UpdateChannel(channel2reader, "Channel2");
-            //}
-
+            
             if(firstcalltopolling)
             {
                 for(var i=0;i<CurrentNoOfChannelSelected;i++)
@@ -125,7 +175,8 @@ namespace DeviceDataDisplay
                 }
                 firstcalltopolling = false;
             }
-
+            LogChannelValues = "";
+            LogChannelNames = "";
             for(var i=0;i<CurrentNoOfChannelSelected;i++)
             {
                 UpdateChannel(ChannelReader[i], "Channel" + (i + 1));
@@ -147,6 +198,37 @@ namespace DeviceDataDisplay
             }
             else
             {
+                TimeSpan oneminute = DateTime.Now.Subtract(ApplicationStartTimeForLog);
+                
+                Debug.WriteLine(oneminute.Seconds);
+                if (oneminute.Minutes >= logintervalinminutes)
+                {
+                    string InsertSQL = "Insert into devicelog(LogDateTime," + LogChannelNames.TrimEnd(',') + ") Values('" + DateTime.Now.ToString("yyyy-MM-dd H:mm:ss") +"',"+
+                                       LogChannelValues.TrimEnd(',') + ")";
+                    //Debug.WriteLine(InsertSQL);
+                    try
+                    {
+                        using (MySqlConnection Connection =
+                            new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
+                        {
+                            Connection.Open();
+                            MySqlCommand loginsert = new MySqlCommand();
+                            loginsert.CommandType = CommandType.Text;
+                            loginsert.CommandText = InsertSQL;
+                            loginsert.Connection = Connection;
+                            loginsert.ExecuteNonQuery();
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                        
+                    }
+             
+                    ApplicationStartTimeForLog = DateTime.Now;
+                }
+
                 tmrChannel1.Change(TimeSpan.Zero,TimeSpan.FromMilliseconds(firstdisplayloadtimeMS));
             }
 
@@ -200,7 +282,8 @@ namespace DeviceDataDisplay
                 
                 channelreader.ReadDevice();
                 lastdisplayedvalue1 = channelreader.value_resolution_units;
-
+                LogChannelValues +=  "'" + channelreader.value_resolution_units +"',";
+                LogChannelNames += channelid + "Value" + ",";
                 this.Invoke((MethodInvoker)delegate
                 {
                     var p = Controls.Find(channelid, false);
@@ -246,7 +329,7 @@ namespace DeviceDataDisplay
         private void PaintPanelBorder(object sender, PaintEventArgs e)
         {
             Panel p = sender as Panel;
-            ControlPaint.DrawBorder(e.Graphics, p.ClientRectangle, Color.LightBlue, ButtonBorderStyle.Solid);
+            ControlPaint.DrawBorder(e.Graphics, p.ClientRectangle, ColorTranslator.FromHtml(colorsetting["panelbordercolour"]), ButtonBorderStyle.Solid);
 
         }
 
@@ -410,7 +493,7 @@ namespace DeviceDataDisplay
                     p.Height = panelheight;
                     p.Width = panelwidth;
                     p.BorderStyle = BorderStyle.None;
-                    p.BackColor = Color.DarkBlue;
+                    p.BackColor = ColorTranslator.FromHtml(colorsetting["panelcolour"]);
                     p.Paint += PaintPanelBorder;
                     
                     p.Location = new Point((panelwidth * j), (panelheight * i));
@@ -419,279 +502,186 @@ namespace DeviceDataDisplay
                     if (noOfChannels == 1)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1restfontsize"]), FontStyle.Bold);
-                        double onlyvalue = Convert.ToDouble(drow["value"]);
-                        var value = onlyvalue.ToString();
                         
-                        //if(Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{ 
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if(Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if(Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString() ,fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        List<int> fontsetting = getFontSetting("ch1fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1restfontsize"]), FontStyle.Bold);
+
+                        var value = drow["value"].ToString();
+
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                       
                     }
                     if (noOfChannels ==2)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2restfontsize"]), FontStyle.Bold);
+
+                        List<int> fontsetting = getFontSetting("ch2fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2restfontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
 
                     }
                     if (noOfChannels >=3 && noOfChannels <=4)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch34valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch34restfontsize"]), FontStyle.Bold);
+                        List<int> fontsetting = getFontSetting("ch3-4fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch34valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch34restfontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
                         
-
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
                     }
                     if (noOfChannels >= 5 && noOfChannels <= 8)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch58valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch58restfontsize"]), FontStyle.Bold);
+
+                        List<int> fontsetting = getFontSetting("ch5-8fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch58valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch58restfontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
-
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]),Convert.ToBoolean(drow["alarmstatus"]));
+                        
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]),Convert.ToBoolean(drow["alarmstatus"]));
                     }
 
                     if (noOfChannels >= 9 && noOfChannels <= 12)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch912valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch912restfontsize"]), FontStyle.Bold);
+                        List<int> fontsetting = getFontSetting("ch9-12fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch912valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch912restfontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
+                        
 
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
 
                     }
                     if (noOfChannels >= 13 && noOfChannels <= 16)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1316valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1316restfontsize"]), FontStyle.Bold);
+
+                        List<int> fontsetting = getFontSetting("ch13-16fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1316valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1316restfontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, null, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
                     }
 
                     if (noOfChannels >= 17 && noOfChannels <= 20)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1720valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1720restfontsize"]), FontStyle.Bold);
-                        Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chname1720fontsize"]), FontStyle.Bold);
+                        List<int> fontsetting = getFontSetting("ch17-20fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1720valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch1720restfontsize"]), FontStyle.Bold);
+                        //Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chname1720fontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
+                        
 
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannel, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
                     }
                     if (noOfChannels >= 21 && noOfChannels <= 24)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2124valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2124restfontsize"]), FontStyle.Bold);
-                        Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
+                        List<int> fontsetting = getFontSetting("ch21-24fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2124valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2124restfontsize"]), FontStyle.Bold);
+                        //Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannel, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
 
                     }
                     if (noOfChannels >= 25 && noOfChannels <= 28)
                     {
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2528valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2528restfontsize"]), FontStyle.Bold);
-                        Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
-                        double onlyvalue = Convert.ToDouble(drow["value"]);
-                        var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
+                        List<int> fontsetting = getFontSetting("ch25-28fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
 
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannel, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2528valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2528restfontsize"]), FontStyle.Bold);
+                        //Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
+                        //double onlyvalue = Convert.ToDouble(drow["value"]);
+                        var value = drow["value"].ToString();
+
+                        
+
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
 
                     }
                     if (noOfChannels >= 29 && noOfChannels <= 32)
                     {
 
                         DataRow drow = getchannel(tblChannel, channelid);
-                        Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2932valuefontsize"]), FontStyle.Bold);
-                        Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2932restfontsize"]), FontStyle.Bold);
-                        Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
+
+                        List<int> fontsetting = getFontSetting("ch29-32fontsetting");
+                        Font fontvalue = new Font("Arial Unicode MS", fontsetting[0], FontStyle.Bold);
+                        Font fontChannelminmax = new Font("Arial Unicode MS", fontsetting[1], FontStyle.Bold);
+                        Font fontChannelName = new Font("Arial Unicode MS", fontsetting[2], FontStyle.Bold);
+
+
+                        //Font fontvalue = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2932valuefontsize"]), FontStyle.Bold);
+                        //Font fontChannelminmax = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["ch2932restfontsize"]), FontStyle.Bold);
+                        //Font fontChannel = new Font("Arial Unicode MS", float.Parse(ConfigurationSettings.AppSettings["chnameafter20fontsize"]), FontStyle.Bold);
                         double onlyvalue = Convert.ToDouble(drow["value"]);
                         var value = onlyvalue.ToString();
 
-                        //if (Convert.ToBoolean(drow["onlyminlevel"]) && Convert.ToBoolean(drow["onlymaxlevel"]))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlyminlevel"]) && !(Convert.ToBoolean(drow["onlymaxlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else if (Convert.ToBoolean(drow["onlymaxlevel"]) && !(Convert.ToBoolean(drow["onlyminlevel"])))
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, drow["maxlevel"].ToString(), fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-                        //else
-                        //{
-                        //    p = screenbuilder(p, value, drow["channel_name"].ToString(), null, null, fontvalue, fontChannelminmax,fontChannel, Convert.ToBoolean(drow["alarmswitch"]));
-                        //}
-
-                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannel, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
+                        
+                        p = screenbuilder(p, value, drow["channel_name"].ToString(), drow["minlevel"].ToString(), drow["maxlevel"].ToString(), fontvalue, fontChannelminmax, fontChannelName, Convert.ToBoolean(drow["alarmswitch"]), Convert.ToBoolean(drow["onlymaxlevel"]), Convert.ToBoolean(drow["onlyminlevel"]), Convert.ToBoolean(drow["alarmstatus"]));
                     }
                     Controls.Add(p);
                     
@@ -699,8 +689,46 @@ namespace DeviceDataDisplay
             }
 
         }
-        
-        
+
+        private List<int> getFontSetting(string channelrange)
+        {
+            try
+            {
+                List<int> fontsize = new List<int>();
+                using (MySqlConnection connection =
+                    new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
+                {
+                    string sql = "select * from displaysetting where channelrange = '" + channelrange + "'";
+                    connection.Open();
+                    MySqlCommand command =
+                        new MySqlCommand(sql, connection);
+
+
+                    MySqlDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        
+                        while (reader.Read())
+                        {
+                            fontsize.Add(reader.GetInt32(2));
+                            fontsize.Add(reader.GetInt32(3));
+                            fontsize.Add(reader.GetInt32(4));
+                        }
+                    }
+
+                }
+
+                return fontsize;
+            }
+            catch (Exception ex)
+            {
+                 
+                Debug.WriteLine(ex.Message);
+                 
+            }
+            return null;
+        }
         private DataRow getchannel(DataTable memchannel,int channelno)
         {
             var result = (from channel in memchannel.AsEnumerable()
@@ -744,7 +772,7 @@ namespace DeviceDataDisplay
             setlevels.ShowDialog();
         }
 
-        private Panel screenbuilder(Panel p, string valuewithunits, string channelname, string minlevel, string maxlevel, Font valuefont, Font minmaxchannel, Font channel21above =null,bool alarmsetting=false,bool metermax=false,bool metermin =false, bool alarmstatus=false)
+        private Panel screenbuilder(Panel p, string valuewithunits, string channelname, string minlevel, string maxlevel, Font valuefont, Font minmaxchannel, Font fontchannelname ,bool alarmsetting=false,bool metermax=false,bool metermin =false, bool alarmstatus=false)
         {
 
             Label lbl = new Label();
@@ -768,21 +796,22 @@ namespace DeviceDataDisplay
 
             lbl.Location = pointvalue;
 
-            lbl.ForeColor = Color.White;
+            lbl.ForeColor = ColorTranslator.FromHtml(colorsetting["valuecolour"]);
             lbl.BorderStyle = BorderStyle.FixedSingle;
             p.Controls.Add(lbl);
 
             //Adding channel to panel
 
             Label lblchannelname = new Label();
+            /*
             if(channel21above == null)
             {
                 lblchannelname.Font = fontChannelminmax;
             }
             else if(channel21above!=null)
-            {
-                lblchannelname.Font = channel21above;
-            }
+            {*/
+                lblchannelname.Font = fontchannelname;
+            //}
 
             lblchannelname.AutoSize = false;
             lblchannelname.TextAlign = ContentAlignment.MiddleCenter;
@@ -799,7 +828,7 @@ namespace DeviceDataDisplay
 
             lblchannelname.Location = pointvaluechannelname;
 
-            lblchannelname.ForeColor = Color.White;
+            lblchannelname.ForeColor = ColorTranslator.FromHtml(colorsetting["channelnamecolour"]);
             lblchannelname.BorderStyle = BorderStyle.FixedSingle;
             p.Controls.Add(lblchannelname);
 
@@ -823,7 +852,7 @@ namespace DeviceDataDisplay
 
                 lblmin.Location = pointminlevel;
 
-                lblmin.ForeColor = Color.White;
+                lblmin.ForeColor = ColorTranslator.FromHtml(colorsetting["setpointcolour"]);
                 lblmin.BorderStyle = BorderStyle.FixedSingle;
                 p.Controls.Add(lblmin);
             }
@@ -855,7 +884,7 @@ namespace DeviceDataDisplay
 
                 lblmax.Location = pointmaxlevel;
 
-                lblmax.ForeColor = Color.White;
+                lblmax.ForeColor = ColorTranslator.FromHtml(colorsetting["setpointcolour"]);
                 lblmax.BorderStyle = BorderStyle.FixedSingle;
                 p.Controls.Add(lblmax);
 
@@ -890,7 +919,7 @@ namespace DeviceDataDisplay
                 lblalarmmode.Font = fontChannelminmax;
                 lblalarmmode.AutoSize = true;
                 lblalarmmode.Text = "Alarm Mode";
-                lblalarmmode.ForeColor = Color.White;
+                lblalarmmode.ForeColor = ColorTranslator.FromHtml(colorsetting["setpointcolour"]);
 
                 SizeF extentalarmlevel = g.MeasureString(lblalarmmode.Text, lblalarmmode.Font);
 
@@ -947,7 +976,67 @@ namespace DeviceDataDisplay
             }
         }
 
-        public class CustomColorTable : ProfessionalColorTable
+        private void ChannelStartUp()
+        {
+               using (MySqlConnection Connection =new MySqlConnection(ConfigurationSettings.AppSettings["dbConnectionString"]))
+                {
+                    try
+                    {
+                        Connection.Open();
+                        string query = "Select Count(*) from channels where deviceRefID !=0 ";
+
+                        MySqlCommand command = new MySqlCommand(query,Connection);
+
+                        object value = command.ExecuteScalar();
+                        if(value != null)
+                        {
+                            ChannelSetting(Convert.ToInt32(value.ToString()));
+                        
+                        }
+                        else
+                        {
+                            ChannelSetting();
+                        }
+                        
+
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                        Debug.WriteLine(ex.Message);
+                    }
+                    
+
+                }
+            
+            
+        }
+
+        private void AutoPolling()
+        {
+            try
+            {
+                if (OpenPort())
+                {
+                    ShowChannels.Enabled = false;
+                    mainMenuToolStripMenuItem.Enabled = false;
+                    ConnectionStatus = true;
+                    //CallTimers(CurrentNoOfChannelSelected);
+                    tmrChannel1 = new System.Threading.Timer(pollingCallBack, "", Timeout.Infinite, Timeout.Infinite);
+                    tmrChannel1.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(firstdisplayloadtimeMS));
+                    poller.Text = "Disconnect";
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                
+                Debug.WriteLine(ex.Message);
+            }
+        }
+        public class
+            CustomColorTable : ProfessionalColorTable
         {
             public override Color ImageMarginGradientBegin
             {
@@ -1104,6 +1193,18 @@ namespace DeviceDataDisplay
         {
             SetDeviceAlarm devicealarm= new SetDeviceAlarm();
             devicealarm.ShowDialog();
+        }
+
+        private void networkSettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            NetworkSetting networkSetting = new NetworkSetting();
+            ;
+            networkSetting.ShowDialog();
+        }
+
+        private void DeviceDataDisplay_Paint(object sender, PaintEventArgs e)
+        {
+            loaded = true;
         }
     }
 }

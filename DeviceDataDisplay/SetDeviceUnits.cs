@@ -36,7 +36,7 @@ namespace DeviceDataDisplay
                 this.tbldevices = deviceunitsdata.Tables["device_units"];
 
                 DeviceUnits.DataSource = this.tbldevices;
-                DeviceUnits.Columns["device_unitsID"].ReadOnly = true;
+                DeviceUnits.Columns["device_unitsid"].ReadOnly = true;
                 DeviceUnits.Columns["deviceid"].ReadOnly = false;
                 DeviceUnits.Columns["units_index"].ReadOnly = false;
                 DeviceUnits.Columns["units_value"].ReadOnly = false;
@@ -259,6 +259,11 @@ namespace DeviceDataDisplay
         private void DeviceUnits_CellLeave(object sender, DataGridViewCellEventArgs e)
         {
             cmbglobal.SelectedIndexChanged -= new EventHandler(deviceid_SelectedIndexChanged);
+        }
+
+        private void DeviceUnits_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
  }

@@ -75,24 +75,26 @@ namespace DeviceDataDisplay
                     
                     
                 //add new column to grid;
-                ChannelsGV.Columns.Add(cc);
-                    
+                cc.DataPropertyName = "units";
+                ChannelsGV.Columns.Add(cc);    
                 //loop thru the grids invsible column units of channel table
                 // and set the value to the combobox value
+                /*
                 foreach (DataGridViewRow item in ChannelsGV.Rows)
                 {
                     item.Cells[3].Value = item.Cells[2].Value;
                     item.Height = 30;    
                 
                 }
+                */
                 ChannelsGV.Columns[0].Width = 125;
                 ChannelsGV.Columns[1].Width = 200;
                 ChannelsGV.Columns[1].HeaderText = "Channels";
-                ChannelsGV.Columns[3].Width = 125;
+                //ChannelsGV.Columns[3].Width = 125;
                     
             ChannelsGV.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
             ChannelsGV.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
-            ChannelsGV.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
+            //ChannelsGV.Columns[3].SortMode = DataGridViewColumnSortMode.NotSortable;
 
             }
             ChannelsGV.AllowUserToAddRows = false;
@@ -156,6 +158,11 @@ namespace DeviceDataDisplay
         private void Save_Click(object sender, EventArgs e)
         {
             SetUnits.ActiveForm.Close();
+        }
+
+        private void ChannelsGV_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
 }
