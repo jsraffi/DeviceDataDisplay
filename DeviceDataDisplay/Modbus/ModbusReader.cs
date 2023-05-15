@@ -13,6 +13,7 @@ using System.IO.Ports;
 
 namespace DeviceDataDisplay.Modbus
 {
+    //This is modbus reader
     public class ModbusReader
     {
         modbus mb = new modbus();
