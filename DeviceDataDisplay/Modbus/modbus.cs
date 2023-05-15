@@ -5,7 +5,7 @@ using System.IO.Ports;
 
 namespace DeviceDataDisplay.Modbus
 {
-    //This modbus main reader
+    //This modbus main reader with new changes
     public class modbus
     {
         public SerialPort sp = new SerialPort();

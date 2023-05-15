@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DeviceDataDisplay.ViewModels
-{ //This is a view model
+{ //From visual studio
     public class Channel
     {
         public int channel_no { get; set; }
