@@ -8,6 +8,7 @@ namespace DeviceDataDisplay.Modbus
     //This modbus main reader with new changes
     public class modbus
     {
+        // this is stash chnages
         public SerialPort sp = new SerialPort();
         public string modbusStatus;
 
